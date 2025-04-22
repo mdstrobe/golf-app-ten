@@ -33,7 +33,7 @@ export default function Auth() {
         console.log("User successfully inserted into Supabase:", user.uid, user.email);
       }
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: any | null) {
       console.error("Auth error:", err);
       setError(err.message);
     }
