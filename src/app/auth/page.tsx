@@ -22,7 +22,6 @@ export default function Auth() {
       } else {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const { user } = userCredential;
-        // Sync user to Supabase with error handling
         const { error: supabaseError } = await supabase.from("users").insert([
           { firebase_uid: user.uid, email: user.email },
         ]);
@@ -33,9 +32,9 @@ export default function Auth() {
         console.log("User successfully inserted into Supabase:", user.uid, user.email);
       }
       router.push("/dashboard");
-    } catch (err: any | null) {
+    } catch (err: unknown) {
       console.error("Auth error:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "An error occurred");
     }
   };
 
