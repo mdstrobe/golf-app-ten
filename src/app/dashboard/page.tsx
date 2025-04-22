@@ -6,8 +6,16 @@ import { auth } from "@/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { supabase } from "@/supabase";
 
+// Define the shape of the user data from Supabase
+interface UserData {
+  id: number;
+  firebase_uid: string;
+  email: string;
+  created_at: string;
+}
+
 export default function Dashboard() {
-  const [userData, setUserData] = useState<any | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -92,6 +100,7 @@ export default function Dashboard() {
         <h3 className="text-lg font-bold mb-2">TRAINING & ANALYSIS</h3>
         <div className="flex items-center">
           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-2">
+            📊
           </div>
           <div>
             <p className="font-semibold">Game Analysis</p>
