@@ -19,7 +19,7 @@ export const metadata: Metadata = {
        children: React.ReactNode;
      }) {
        return (
-         <html lang="en">
+         <html lang="en" className={inter.variable}>
            <body>{children}</body>
          </html>
        );
