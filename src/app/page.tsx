@@ -1,42 +1,76 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { auth } from "@/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import Link from "next/link";
+import Image from "next/image";
+
+const courseImages = [
+  "/images/course1.jpg",
+  "/images/course2.jpg",
+  "/images/course3.jpg",
+  "/images/course4.jpg",
+  "/images/course5.jpg",
+  "/images/course6.jpg",
+  "/images/course1.jpg",
+  "/images/course2.jpg",
+  "/images/course3.jpg",
+];
 
 export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        router.push("/dashboard");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-2 p-4">
-        {[...Array(9)].map((_, i) => (
-          <div key={i} className="bg-gray-300 rounded-lg" />
-        ))}
-      </div>
-      <div className="relative text-center">
-        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <div className="w-6 h-6 bg-white rounded-full" />
+    <main className="min-h-screen bg-gray-100 flex flex-col items-center">
+      {/* Image Grid with Fade */}
+      <div className="relative w-full max-w-md mx-auto mt-6">
+        <div className="grid grid-cols-3 grid-rows-3 gap-2 rounded-xl overflow-hidden">
+          {courseImages.map((src, i) => (
+            <div key={i} className="relative aspect-square">
+              <Image
+                src={src}
+                alt={`Golf course ${i + 1}`}
+                fill
+                className="object-cover"
+                priority={i === 0}
+              />
+            </div>
+          ))}
         </div>
-        <h1 className="text-2xl font-bold mb-2">Golf Performance App</h1>
-        <p className="text-gray-600 mb-6">Master Your Game with Data</p>
-        <button
-          onClick={() => router.push("/auth")}
-          className="bg-green-500 text-white px-6 py-3 rounded-full"
-        >
-          JOIN the Beta Experience
-        </button>
+        {/* Fade overlay at bottom */}
+        <div className="pointer-events-none absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-gray-100 to-transparent z-10" />
       </div>
-    </div>
+
+      {/* Logo and Content */}
+      <div className="flex flex-col items-center w-full max-w-md mx-auto mt-0 z-20 relative px-4">
+        {/* Logo (from signup page, no white background) */}
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 relative z-10">
+          <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#15803D" />
+            <circle cx="100" cy="85" r="35" fill="white" />
+            <circle cx="100" cy="85" r="35" fill="url(#golfBallPattern)" />
+            <defs>
+              <pattern id="golfBallPattern" patternUnits="userSpaceOnUse" width="10" height="10">
+                <circle cx="5" cy="5" r="1" fill="#E5E7EB" opacity="0.3" />
+                <line x1="0" y1="5" x2="10" y2="5" stroke="#E5E7EB" strokeWidth="0.5" opacity="0.2" />
+                <line x1="5" y1="0" x2="5" y2="10" stroke="#E5E7EB" strokeWidth="0.5" opacity="0.2" />
+              </pattern>
+            </defs>
+            <path d="M100 120 L100 150" stroke="#A37B43" strokeWidth="10" strokeLinecap="round" />
+          </svg>
+        </div>
+        {/* App Title */}
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-2">
+          Golf Performance App
+        </h1>
+        {/* Tagline */}
+        <p className="text-base text-gray-600 text-center mb-8">
+          Master Your Game with Data
+        </p>
+        {/* Buttons */}
+        <Link
+          href="/auth"
+          className="w-full mb-3 bg-green-600 text-white py-3 rounded-full text-lg font-medium hover:bg-green-700 transition-colors duration-200 shadow-md text-center"
+        >
+          Join the Beta Experience
+        </Link>
+      </div>
+    </main>
   );
 }
