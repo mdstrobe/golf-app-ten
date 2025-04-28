@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { supabase } from "@/supabase";
-import Link from "next/link";
 
 interface UserData {
   id: number;
