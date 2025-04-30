@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function AddRound() {
   const [isManualEntry, setIsManualEntry] = useState(false);
-  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gray-50">
