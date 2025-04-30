@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -17,7 +17,21 @@ export default function Dashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -79,13 +93,13 @@ export default function Dashboard() {
                   <path d="M18 9C18 5.68629 15.3137 3 12 3C8.68629 3 6 5.68629 6 9C6 16 3 17 3 17H21C21 17 18 16 18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </button>
-              <div className="relative">
-                <button
+              <div className="relative" ref={userMenuRef}>
+              <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="w-8 h-8 bg-[#15803D] text-white rounded-full flex items-center justify-center hover:bg-[#126c33] transition-colors"
-                >
-                  {userData.email.charAt(0).toUpperCase()}
-                </button>
+              >
+                {userData.email.charAt(0).toUpperCase()}
+              </button>
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10">
                     <button
@@ -162,7 +176,7 @@ export default function Dashboard() {
                   </svg>
                   2.1%
                 </span>
-              </div>
+          </div>
             </div>
 
             <div className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6">
@@ -175,7 +189,7 @@ export default function Dashboard() {
                   </svg>
                   5.7%
                 </span>
-              </div>
+          </div>
             </div>
 
             <div>
@@ -188,7 +202,7 @@ export default function Dashboard() {
                   </svg>
                   1.2%
                 </span>
-              </div>
+          </div>
             </div>
           </div>
         </div>
@@ -283,14 +297,14 @@ export default function Dashboard() {
                 <div className="text-left">
                   <span className="text-gray-900 font-medium">PGA News</span>
                   <p className="text-sm text-gray-500">Latest tour updates</p>
-                </div>
-              </div>
+          </div>
+            </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-[#15803D] font-medium">Coming Soon</span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
                   <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              </div>
+            </div>
             </button>
           </div>
         </div>
