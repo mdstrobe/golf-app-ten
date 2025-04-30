@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { supabase } from "@/supabase";
+import Link from "next/link";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -51,8 +52,16 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="mb-8 flex flex-col items-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4">
+      <Link 
+        href="/" 
+        className="absolute left-4 top-4 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-md text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </Link>
+      <div className="mb-8 flex flex-col items-center relative w-full">
         <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 relative z-10">
           <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="100" cy="100" r="90" fill="#15803D" />
@@ -77,8 +86,8 @@ export default function Auth() {
           <button
             className={`px-6 py-2 text-lg font-medium transition-colors ${
               isLogin 
-                ? "text-green-600 border-b-2 border-green-600" 
-                : "text-gray-500 hover:text-green-600"
+                ? "text-[#15803D] border-b-2 border-[#15803D]" 
+                : "text-gray-500 hover:text-[#15803D]"
             }`}
             onClick={() => setIsLogin(true)}
           >
@@ -87,8 +96,8 @@ export default function Auth() {
           <button
             className={`px-6 py-2 text-lg font-medium transition-colors ${
               !isLogin 
-                ? "text-green-600 border-b-2 border-green-600" 
-                : "text-gray-500 hover:text-green-600"
+                ? "text-[#15803D] border-b-2 border-[#15803D]" 
+                : "text-gray-500 hover:text-[#15803D]"
             }`}
             onClick={() => setIsLogin(false)}
           >
@@ -151,9 +160,9 @@ export default function Auth() {
 
           <button
             onClick={handleAuth}
-            className="w-full bg-green-600 text-white p-4 rounded-xl font-medium hover:bg-green-700 transition-colors"
+            className="w-full bg-[#15803D] text-white p-4 rounded-xl font-medium hover:bg-[#126c33] transition-colors"
           >
-            {isLogin ? "Sign In" : "Create Account"}
+            {isLogin ? "Log In" : "Create Account"}
           </button>
         </div>
       </div>

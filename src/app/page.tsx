@@ -17,7 +17,7 @@ const courseImages = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center">
+    <main className="min-h-screen bg-gray-100 flex flex-col items-center px-4">
       {/* Image Grid with Fade */}
       <div className="relative w-full max-w-md mx-auto mt-6">
         <div className="grid grid-cols-3 grid-rows-3 gap-2 rounded-xl overflow-hidden">
@@ -66,7 +66,7 @@ export default function Home() {
         {/* Buttons */}
         <Link
           href="/auth"
-          className="w-full mb-3 bg-green-600 text-white py-3 rounded-full text-lg font-medium hover:bg-green-700 transition-colors duration-200 shadow-md text-center"
+          className="w-full mb-3 bg-[#15803D] text-white py-3 rounded-full text-lg font-medium hover:bg-[#126c33] transition-colors duration-200 shadow-md text-center"
         >
           Join the Experience
         </Link>
