@@ -165,6 +165,9 @@ export default function Auth() {
             {isLogin ? "Log In" : "Create Account"}
           </button>
         </div>
+        <div className="mt-4 text-center text-sm text-gray-600">
+          {isLogin ? "" : "By creating an account, you agree to our Terms of Service and Privacy Policy."}
+        </div>
       </div>
     </div>
   );
