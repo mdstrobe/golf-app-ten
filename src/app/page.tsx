@@ -68,7 +68,7 @@ export default function Home() {
           href="/auth"
           className="w-full mb-3 bg-green-600 text-white py-3 rounded-full text-lg font-medium hover:bg-green-700 transition-colors duration-200 shadow-md text-center"
         >
-          Join the Beta Experience
+          Join the Experience
         </Link>
       </div>
     </main>
