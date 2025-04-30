@@ -64,7 +64,7 @@ export default function Dashboard() {
                 onClick={() => router.push('/add-round')}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
               >
-                Add Round
+                Add New Round
               </button>
               <button
                 onClick={handleSignOut}
