@@ -13,8 +13,39 @@ interface UserData {
   created_at: string;
 }
 
+interface GolfRound {
+  id: string;
+  user_id: number;
+  date_played: string;
+  submission_type: string;
+  front_nine_scores: number[] | null;
+  back_nine_scores: number[] | null;
+  front_nine_putts: number[] | null;
+  back_nine_putts: number[] | null;
+  front_nine_fairways: number[] | null;
+  back_nine_fairways: number[] | null;
+  front_nine_gir: number[] | null;
+  back_nine_gir: number[] | null;
+  total_score: number;
+  total_putts: number;
+  total_fairway: number;
+  total_gir: number;
+}
+
 export default function Dashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [golfRounds, setGolfRounds] = useState<GolfRound[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    currentHcp: "",
+    hcpChange: "0%",
+    avgScore: "",
+    scoreChange: "0%",
+    girPercentage: "",
+    girChange: "0%",
+    puttsPerRound: "",
+    puttsChange: "0%"
+  });
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -34,25 +65,129 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      const { data, error } = await supabase
+    let isSubscribed = true;
+    const fetchData = async (user: any) => {
+      setIsLoading(true);
+      
+      const { data: userData, error: userError } = await supabase
         .from("users")
         .select("*")
         .eq("firebase_uid", user.uid)
         .single();
-      if (error || !data) {
-        console.error("Error fetching user data:", error);
-        setFetchError("User data not found in Supabase. Please sign up again or contact support.");
+      
+      if (userError || !userData) {
+        console.error("Error fetching user data:", userError);
+        if (isSubscribed) {
+          setFetchError("User data not found in Supabase. Please sign up again or contact support.");
+        }
         return;
       }
-      setUserData(data);
+
+      if (!userData.id) {
+        console.error("User data found but missing ID");
+        setFetchError("Invalid user data format. Please contact support.");
+        return;
+      }
+
+      if (isSubscribed) {
+        setUserData(userData);
+      }
+
+      // Ensure user_id is treated as a number
+      const userId = parseInt(userData.id.toString(), 10);
+      
+      const { data: roundsData, error: roundsError } = await supabase
+        .from("golf_rounds")
+        .select("*")
+        .eq("user_id", userId);
+      
+      if (roundsError) {
+        console.error("Error fetching golf rounds:", roundsError);
+        setFetchError("Error loading your golf rounds. Please try again later.");
+        return;
+      }
+
+      if (roundsData && isSubscribed) {
+        setGolfRounds(roundsData);
+      }
+      setIsLoading(false);
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/auth");
+        return;
+      }
+      fetchData(user);
     });
-    return () => unsubscribe();
+
+    return () => {
+      isSubscribed = false;
+      unsubscribe();
+    };
   }, [router]);
+
+  useEffect(() => {
+    if (golfRounds.length === 0) {
+      setStats({
+        currentHcp: "0.0",
+        hcpChange: "0%",
+        avgScore: "0",
+        scoreChange: "0%",
+        girPercentage: "0%",
+        girChange: "0%",
+        puttsPerRound: "0.0",
+        puttsChange: "0%"
+      });
+      return;
+    }
+
+    try {
+      // Calculate averages from all available rounds
+      const avgScore = golfRounds.reduce((sum, round) => {
+        return sum + (round.total_score || 0);
+      }, 0) / golfRounds.length;
+
+      const avgPutts = golfRounds.reduce((sum, round) => {
+        return sum + (round.total_putts || 0);
+      }, 0) / golfRounds.length;
+
+      const totalGir = golfRounds.reduce((sum, round) => {
+        return sum + (round.total_gir || 0);
+      }, 0);
+
+      const totalPossibleGir = golfRounds.length * 18;
+      const girPercentage = (totalGir / totalPossibleGir) * 100;
+
+      // Simple handicap calculation
+      const courseRating = 72;
+      const avgScoreDiff = avgScore - courseRating;
+      const estimatedHcp = Math.max(0, avgScoreDiff * 0.96);
+
+      setStats({
+        currentHcp: estimatedHcp.toFixed(1),
+        hcpChange: "0%",
+        avgScore: Math.round(avgScore).toString(),
+        scoreChange: "0%",
+        girPercentage: `${Math.round(girPercentage)}%`,
+        girChange: "0%",
+        puttsPerRound: avgPutts.toFixed(1),
+        puttsChange: "0%"
+      });
+    } catch (error) {
+      console.error("Error calculating stats:", error);
+      setStats({
+        currentHcp: "ERR",
+        hcpChange: "0%",
+        avgScore: "ERR",
+        scoreChange: "0%",
+        girPercentage: "ERR",
+        girChange: "0%",
+        puttsPerRound: "ERR",
+        puttsChange: "0%"
+      });
+    }
+  }, [golfRounds]);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -150,62 +285,78 @@ export default function Dashboard() {
         </div>
 
         {/* Performance Stats */}
-        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-          <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6">
-              <h3 className="text-gray-600 mb-2">Current HCP</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-bold">12.4</p>
-                <span className="text-green-600 text-sm flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  8.3%
-                </span>
+        {isLoading ? (
+          <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+            <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6 last:border-0">
+                  <div className="h-[72px] animate-pulse flex flex-col">
+                    <div className="h-5 bg-gray-200 rounded w-20 mb-2"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+            <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6">
+                <h3 className="text-gray-600 mb-2">Current HCP</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold">{stats.currentHcp || "0.0"}</p>
+                  <span className="text-green-600 text-sm flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {stats.hcpChange}
+                  </span>
+                </div>
+              </div>
+
+              <div className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6">
+                <h3 className="text-gray-600 mb-2">Avg. Score</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold">{stats.avgScore || "0"}</p>
+                  <span className="text-red-600 text-sm flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {stats.scoreChange}
+                  </span>
+                </div>
+              </div>
+
+              <div className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6">
+                <h3 className="text-gray-600 mb-2">GIR %</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold">{stats.girPercentage || "0%"}</p>
+                  <span className="text-green-600 text-sm flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {stats.girChange}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-gray-600 mb-2">Putts Per Round</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold">{stats.puttsPerRound || "0.0"}</p>
+                  <span className="text-red-600 text-sm flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {stats.puttsChange}
+                  </span>
+                </div>
               </div>
             </div>
-
-            <div className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6">
-              <h3 className="text-gray-600 mb-2">Avg. Score</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-bold">87</p>
-                <span className="text-red-600 text-sm flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  2.1%
-                </span>
           </div>
-            </div>
-
-            <div className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6">
-              <h3 className="text-gray-600 mb-2">GIR %</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-bold">42%</p>
-                <span className="text-green-600 text-sm flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  5.7%
-                </span>
-          </div>
-            </div>
-
-            <div>
-              <h3 className="text-gray-600 mb-2">Putts Per Round</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-bold">31.5</p>
-                <span className="text-red-600 text-sm flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  1.2%
-                </span>
-          </div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Interactive Features */}
         <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -297,14 +448,14 @@ export default function Dashboard() {
                 <div className="text-left">
                   <span className="text-gray-900 font-medium">PGA News</span>
                   <p className="text-sm text-gray-500">Latest tour updates</p>
-          </div>
-            </div>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-[#15803D] font-medium">Coming Soon</span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
                   <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-            </div>
+              </div>
             </button>
           </div>
         </div>
