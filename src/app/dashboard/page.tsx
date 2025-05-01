@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { supabase } from "@/supabase";
 
 interface UserData {
@@ -66,9 +66,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isSubscribed = true;
-    const fetchData = async (user: any | null) => {
+    const fetchData = async (user: User | null) => {
       setIsLoading(true);
       
+      if (!user) {
+        router.push("/auth");
+        return;
+      }
+
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("*")
