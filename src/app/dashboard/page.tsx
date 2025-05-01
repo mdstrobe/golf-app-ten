@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isSubscribed = true;
-    const fetchData = async (user: any) => {
+    const fetchData = async (user: any | null) => {
       setIsLoading(true);
       
       const { data: userData, error: userError } = await supabase
