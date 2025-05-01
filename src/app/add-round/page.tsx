@@ -182,10 +182,6 @@ export default function AddRound() {
     return scoreNum - puttsNum <= 2;
   };
 
-  const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCourse(e.target.value);
-  };
-
   const handleTeeBoxChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTeeBox(e.target.value);
   };
