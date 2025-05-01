@@ -98,7 +98,7 @@ export default function Dashboard() {
         setUserData(userData);
       }
 
-      // Ensure user_id is treated as a number
+      // Ensure user_id is treated as a number.
       const userId = parseInt(userData.id.toString(), 10);
       
       const { data: roundsData, error: roundsError } = await supabase

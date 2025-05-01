@@ -1,4 +1,3 @@
-import { Rock_3D } from 'next/font/google';
 import React from 'react';
 
 interface ScoreNumberGridProps {
@@ -18,7 +17,6 @@ export default function ScoreNumberGrid({
   onSelect, 
   par, 
   type, 
-  position,
   holeNumber,
   onNextHole
 }: ScoreNumberGridProps) {
