@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from '@supabase/supabase-js';
+import ScoreNumberGrid from '@/components/ScoreNumberGrid';
+import { auth } from "@/firebase";
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -62,6 +64,18 @@ export default function AddRound() {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCourses, setFilteredCourses] = useState<GolfCourse[]>([]);
+  const [numberGrid, setNumberGrid] = useState<{
+    isOpen: boolean;
+    type: 'score' | 'putts';
+    holeIndex: number;
+    position: { top: number; left: number };
+  }>({
+    isOpen: false,
+    type: 'score',
+    holeIndex: 0,
+    position: { top: 0, left: 0 }
+  });
+  const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
 
   // Fetch courses on component mount
   useEffect(() => {
@@ -155,6 +169,15 @@ export default function AddRound() {
       [field]: value,
     };
     setHoles(newHoles);
+    
+    // If it's a score or putt entry, advance to the next hole
+    if ((field === 'score' || field === 'putts') && value !== '' && holeIndex < 17) {
+      const nextHoleIndex = holeIndex + 1;
+      const nextInput = document.querySelector(`input[data-hole="${nextHoleIndex}"][data-type="${field}"]`) as HTMLInputElement;
+      if (nextInput) {
+        nextInput.click();
+      }
+    }
   };
 
   const applyTwoPutts = () => {
@@ -184,6 +207,106 @@ export default function AddRound() {
 
   const handleTeeBoxChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTeeBox(e.target.value);
+  };
+
+  const handleInputClick = (
+    e: React.MouseEvent<HTMLInputElement>,
+    type: 'score' | 'putts',
+    holeIndex: number
+  ) => {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setNumberGrid({
+      isOpen: true,
+      type,
+      holeIndex,
+      position: {
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + rect.width / 2
+      }
+    });
+  };
+
+  const handleNextHole = () => {
+    if (currentHoleIndex < 17) {
+      setCurrentHoleIndex(currentHoleIndex + 1);
+    }
+  };
+
+  const handleSaveRound = async () => {
+    try {
+      // Get current user
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user's ID directly from the users table using Firebase UID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('firebase_uid', currentUser.uid)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user:', userError);
+        throw new Error('Error fetching user data');
+      }
+
+      if (!userData) {
+        throw new Error('User not found');
+      }
+
+      // Transform data to match schema
+      const frontNineScores = holes.slice(0, 9).map(hole => parseInt(hole.score) || 0);
+      const backNineScores = holes.slice(9).map(hole => parseInt(hole.score) || 0);
+      const frontNinePutts = holes.slice(0, 9).map(hole => parseInt(hole.putts) || 0);
+      const backNinePutts = holes.slice(9).map(hole => parseInt(hole.putts) || 0);
+      const frontNineFairways = holes.slice(0, 9).map(hole => hole.fairwayHit || '');
+      const backNineFairways = holes.slice(9).map(hole => hole.fairwayHit || '');
+      const frontNineGir = holes.slice(0, 9).map(hole => calculateGIR(hole.score, hole.putts) || false);
+      const backNineGir = holes.slice(9).map(hole => calculateGIR(hole.score, hole.putts) || false);
+
+      // Prepare round data
+      const roundData = {
+        user_id: userData.id,
+        date_played: new Date().toISOString().split('T')[0], // Today's date
+        submission_type: 'manual',
+        front_nine_scores: frontNineScores,
+        back_nine_scores: backNineScores,
+        front_nine_putts: frontNinePutts,
+        back_nine_putts: backNinePutts,
+        front_nine_fairways: frontNineFairways,
+        back_nine_fairways: backNineFairways,
+        front_nine_gir: frontNineGir,
+        back_nine_gir: backNineGir,
+        total_score: roundSummary.totalScore,
+        total_putts: roundSummary.totalPutts,
+        total_fairways_hit: roundSummary.fairwaysHit,
+        total_gir: roundSummary.girCount,
+        course_id: selectedCourse,
+        tee_box_id: selectedTeeBox
+      };
+
+      console.log('Saving round data:', roundData);
+
+      // Insert into Supabase
+      const { error: insertError } = await supabase
+        .from('golf_rounds')
+        .insert(roundData);
+
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        throw insertError;
+      }
+
+      // Show success message and redirect
+      alert('Round saved successfully!');
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error('Error saving round:', error);
+      alert('Error saving round. Please try again.');
+    }
   };
 
   return (
@@ -432,12 +555,14 @@ export default function AddRound() {
                               {[...Array(9)].map((_, i) => (
                                 <td key={i} className="p-0.5">
                                   <input
-                                    type="number"
-                                    min="1"
+                                    type="text"
+                                    inputMode="none"
                                     value={holes[i].score}
-                                    onChange={(e) => handleHoleChange(i, 'score', e.target.value)}
-                                    tabIndex={i + 1}
-                                    className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D]"
+                                    onClick={(e) => handleInputClick(e, 'score', i)}
+                                    readOnly
+                                    data-hole={i}
+                                    data-type="score"
+                                    className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] cursor-pointer"
                                   />
                                 </td>
                               ))}
@@ -450,12 +575,14 @@ export default function AddRound() {
                               {[...Array(9)].map((_, i) => (
                                 <td key={i} className="p-0.5">
                                   <input
-                                    type="number"
-                                    min="0"
+                                    type="text"
+                                    inputMode="none"
                                     value={holes[i].putts}
-                                    onChange={(e) => handleHoleChange(i, 'putts', e.target.value)}
-                                    tabIndex={i + 19}
-                                    className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] bg-white"
+                                    onClick={(e) => handleInputClick(e, 'putts', i)}
+                                    readOnly
+                                    data-hole={i}
+                                    data-type="putts"
+                                    className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] bg-white cursor-pointer"
                                   />
                                 </td>
                               ))}
@@ -575,12 +702,14 @@ export default function AddRound() {
                             {[...Array(9)].map((_, i) => (
                               <td key={i + 9} className="p-0.5">
                                 <input
-                                  type="number"
-                                  min="1"
+                                  type="text"
+                                  inputMode="none"
                                   value={holes[i + 9].score}
-                                  onChange={(e) => handleHoleChange(i + 9, 'score', e.target.value)}
-                                  tabIndex={i + 10}
-                                  className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D]"
+                                  onClick={(e) => handleInputClick(e, 'score', i + 9)}
+                                  readOnly
+                                  data-hole={i + 9}
+                                  data-type="score"
+                                  className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] cursor-pointer"
                                 />
                               </td>
                             ))}
@@ -593,12 +722,14 @@ export default function AddRound() {
                             {[...Array(9)].map((_, i) => (
                               <td key={i + 9} className="p-0.5">
                                 <input
-                                  type="number"
-                                  min="0"
+                                  type="text"
+                                  inputMode="none"
                                   value={holes[i + 9].putts}
-                                  onChange={(e) => handleHoleChange(i + 9, 'putts', e.target.value)}
-                                  tabIndex={i + 28}
-                                  className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] bg-white"
+                                  onClick={(e) => handleInputClick(e, 'putts', i + 9)}
+                                  readOnly
+                                  data-hole={i + 9}
+                                  data-type="putts"
+                                  className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] bg-white cursor-pointer"
                                 />
                               </td>
                             ))}
@@ -777,8 +908,15 @@ export default function AddRound() {
                 {/* Save Round Button */}
                 <div className="mt-8">
                   <button
-                    type="submit"
-                    className="w-full bg-[#15803D] text-white py-3 rounded-lg hover:bg-[#126c33] transition-colors"
+                    onClick={handleSaveRound}
+                    disabled={!selectedCourse || !selectedTeeBox || holes.some(hole => !hole.score)}
+                    className={`
+                      w-full py-3 rounded-lg transition-colors
+                      ${!selectedCourse || !selectedTeeBox || holes.some(hole => !hole.score)
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-[#15803D] text-white hover:bg-[#126c33]'
+                      }
+                    `}
                   >
                     Save Round
                   </button>
@@ -787,6 +925,18 @@ export default function AddRound() {
             )}
           </div>
         </div>
+
+        {/* Number Grid */}
+        <ScoreNumberGrid
+          isOpen={numberGrid.isOpen}
+          onClose={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
+          onSelect={(value) => handleHoleChange(numberGrid.holeIndex, numberGrid.type, value)}
+          par={parseInt(holes[numberGrid.holeIndex]?.par || '4')}
+          type={numberGrid.type}
+          position={numberGrid.position}
+          holeNumber={numberGrid.holeIndex + 1}
+          onNextHole={handleNextHole}
+        />
       </main>
     </div>
   );
