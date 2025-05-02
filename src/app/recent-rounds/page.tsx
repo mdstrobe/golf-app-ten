@@ -30,23 +30,25 @@ interface Round {
   } | null;
 }
 
-type SupabaseRound = {
+type DatabaseRound = {
   id: string;
   date_played: string;
   total_score: number;
   total_putts: number;
   total_fairways_hit: number;
   total_gir: number;
+  course_id: string;
+  tee_box_id: string;
   course: {
     name: string;
     city: string;
     state: string;
-  }[] | null;
+  } | null;
   tee_box: {
     tee_name: string;
     rating: number;
     slope: number;
-  }[] | null;
+  } | null;
 }
 
 export default function RecentRounds() {
@@ -102,16 +104,30 @@ export default function RecentRounds() {
           throw roundsError;
         }
 
-        console.log('Raw rounds data:', roundsData);
-
         // Transform the data to match our Round interface
-        const transformedRounds: Round[] = (roundsData as any[])?.map(round => ({
-          ...round,
-          course: round.course,
-          tee_box: round.tee_box
-        })) || [];
+        const transformedRounds: Round[] = roundsData?.map(round => {
+          const typedRound = round as unknown as {
+            id: string;
+            date_played: string;
+            total_score: number;
+            total_putts: number;
+            total_fairways_hit: number;
+            total_gir: number;
+            course: { name: string; city: string; state: string };
+            tee_box: { tee_name: string; rating: number; slope: number };
+          };
 
-        console.log('Transformed rounds:', transformedRounds);
+          return {
+            id: typedRound.id,
+            date_played: typedRound.date_played,
+            total_score: typedRound.total_score,
+            total_putts: typedRound.total_putts,
+            total_fairways_hit: typedRound.total_fairways_hit,
+            total_gir: typedRound.total_gir,
+            course: typedRound.course,
+            tee_box: typedRound.tee_box
+          };
+        }) || [];
 
         setRounds(transformedRounds);
         setTotalRounds(transformedRounds.length);
