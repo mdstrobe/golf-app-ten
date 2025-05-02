@@ -30,27 +30,6 @@ interface Round {
   } | null;
 }
 
-type DatabaseRound = {
-  id: string;
-  date_played: string;
-  total_score: number;
-  total_putts: number;
-  total_fairways_hit: number;
-  total_gir: number;
-  course_id: string;
-  tee_box_id: string;
-  course: {
-    name: string;
-    city: string;
-    state: string;
-  } | null;
-  tee_box: {
-    tee_name: string;
-    rating: number;
-    slope: number;
-  } | null;
-}
-
 export default function RecentRounds() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(true);
