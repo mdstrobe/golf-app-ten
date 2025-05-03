@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { supabase } from "@/supabase";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 interface UserData {
   id: number;
@@ -31,6 +35,93 @@ interface GolfRound {
   total_fairway: number;
   total_gir: number;
 }
+
+interface PerformanceAnalysisProps {
+  recentRounds?: GolfRound[];
+  previousRounds?: GolfRound[];
+  allRounds: GolfRound[];
+}
+
+const PerformanceAnalysis: React.FC<PerformanceAnalysisProps> = ({ recentRounds = [], previousRounds = [], allRounds }) => {
+  const [analysis, setAnalysis] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const generateAnalysis = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/analyze-performance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ allRounds })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to generate analysis');
+        }
+        const data = await response.json();
+        setAnalysis(data.analysis);
+      } catch (error) {
+        console.error('Error generating analysis:', error);
+        setAnalysis('Unable to generate performance analysis at this time.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (allRounds && allRounds.length >= 6) {
+      generateAnalysis();
+    }
+  }, [allRounds]);
+
+  // Format the Gemini response for branding
+  const renderFormattedAnalysis = () => {
+    if (!analysis) return null;
+    // Try to split by numbered or bolded sections
+    const majorMatch = analysis.match(/Major Insight[:：]?(.+?)(Specific Insight|Par [345]s? Insight|$)/is);
+    const specificMatch = analysis.match(/(Specific Insight|Par [345]s? Insight)[:：]?(.+)/is);
+    const major = majorMatch ? majorMatch[1].trim() : '';
+    const specific = specificMatch ? specificMatch[2].trim() : '';
+    // Detect trend for color
+    const isPositive = /improve|improvement|decrease|lower|better|reduced|increased gir|more/i.test(major);
+    const isNegative = /worsen|decline|increase|higher|worse|less gir|fewer/i.test(major);
+    const accent = isPositive ? 'text-green-700' : isNegative ? 'text-red-700' : 'text-gray-700';
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="mb-2 font-semibold text-gray-900 text-lg flex items-center gap-2">
+          <svg className="inline-block text-green-600" width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#22c55e" fillOpacity="0.12"/><path d="M8 13l3 3 5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Performance Analysis
+        </div>
+        {major && (
+          <div className={`mb-3 ${accent} font-medium`}><span className="font-bold">Major Insight:</span> {major}</div>
+        )}
+        {specific && (
+          <div className="text-gray-700"><span className="font-bold">Key Detail:</span> {specific}</div>
+        )}
+        {!major && !specific && (
+          <div className="text-gray-700">{analysis}</div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+        <h2 className="text-xl font-bold mb-4">Performance Analysis</h2>
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6">{renderFormattedAnalysis()}</div>
+  );
+};
 
 export default function Dashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -148,36 +239,97 @@ export default function Dashboard() {
     }
 
     try {
-      // Calculate averages from all available rounds
-      const avgScore = golfRounds.reduce((sum, round) => {
-        return sum + (round.total_score || 0);
-      }, 0) / golfRounds.length;
+      // Sort rounds by date (most recent first)
+      const sortedRounds = [...golfRounds].sort((a, b) => 
+        new Date(b.date_played).getTime() - new Date(a.date_played).getTime()
+      );
 
-      const avgPutts = golfRounds.reduce((sum, round) => {
-        return sum + (round.total_putts || 0);
-      }, 0) / golfRounds.length;
+      // Get the most recent 5 rounds
+      const recentRounds = sortedRounds.slice(0, 5);
+      // Get the next 5 most recent rounds (or all remaining if less than 5)
+      const previousRounds = sortedRounds.slice(5, 10);
 
-      const totalGir = golfRounds.reduce((sum, round) => {
-        return sum + (round.total_gir || 0);
-      }, 0);
+      // Calculate averages for recent rounds
+      const recentAvgScore = recentRounds.reduce((sum, round) => sum + (round.total_score || 0), 0) / recentRounds.length;
+      const recentAvgPutts = recentRounds.reduce((sum, round) => sum + (round.total_putts || 0), 0) / recentRounds.length;
+      const recentTotalGir = recentRounds.reduce((sum, round) => sum + (round.total_gir || 0), 0);
+      const recentGirPercentage = (recentTotalGir / (recentRounds.length * 18)) * 100;
 
-      const totalPossibleGir = golfRounds.length * 18;
-      const girPercentage = (totalGir / totalPossibleGir) * 100;
+      // Calculate averages for previous rounds if they exist
+      let previousAvgScore = 0;
+      let previousAvgPutts = 0;
+      let previousGirPercentage = 0;
+      let scoreChange = "0%";
+      let puttsChange = "0%";
+      let girChange = "0%";
+
+      if (previousRounds.length > 0) {
+        previousAvgScore = previousRounds.reduce((sum, round) => sum + (round.total_score || 0), 0) / previousRounds.length;
+        previousAvgPutts = previousRounds.reduce((sum, round) => sum + (round.total_putts || 0), 0) / previousRounds.length;
+        const previousTotalGir = previousRounds.reduce((sum, round) => sum + (round.total_gir || 0), 0);
+        previousGirPercentage = (previousTotalGir / (previousRounds.length * 18)) * 100;
+
+        console.log('Recent Rounds:', recentRounds.map(r => ({
+          date: r.date_played,
+          score: r.total_score,
+          putts: r.total_putts,
+          gir: r.total_gir
+        })));
+        console.log('Previous Rounds:', previousRounds.map(r => ({
+          date: r.date_played,
+          score: r.total_score,
+          putts: r.total_putts,
+          gir: r.total_gir
+        })));
+
+        console.log('Recent Averages:', {
+          score: recentAvgScore,
+          putts: recentAvgPutts,
+          gir: recentGirPercentage
+        });
+        console.log('Previous Averages:', {
+          score: previousAvgScore,
+          putts: previousAvgPutts,
+          gir: previousGirPercentage
+        });
+
+        // Calculate percentage changes
+        // For score and putts, a positive change is bad (getting worse)
+        const scoreDiff = recentAvgScore - previousAvgScore;
+        const puttsDiff = recentAvgPutts - previousAvgPutts;
+        const girDiff = recentGirPercentage - previousGirPercentage;
+
+        console.log('Raw Differences:', {
+          score: scoreDiff,
+          putts: puttsDiff,
+          gir: girDiff
+        });
+
+        scoreChange = `${Math.round((scoreDiff / previousAvgScore) * 100)}%`;
+        puttsChange = `${Math.round((puttsDiff / previousAvgPutts) * 100)}%`;
+        girChange = `${Math.round((girDiff / previousGirPercentage) * 100)}%`;
+
+        console.log('Final Percentage Changes:', {
+          score: scoreChange,
+          putts: puttsChange,
+          gir: girChange
+        });
+      }
 
       // Simple handicap calculation
       const courseRating = 72;
-      const avgScoreDiff = avgScore - courseRating;
+      const avgScoreDiff = recentAvgScore - courseRating;
       const estimatedHcp = Math.max(0, avgScoreDiff * 0.96);
 
       setStats({
         currentHcp: estimatedHcp.toFixed(1),
         hcpChange: "0%",
-        avgScore: Math.round(avgScore).toString(),
-        scoreChange: "0%",
-        girPercentage: `${Math.round(girPercentage)}%`,
-        girChange: "0%",
-        puttsPerRound: avgPutts.toFixed(1),
-        puttsChange: "0%"
+        avgScore: Math.round(recentAvgScore).toString(),
+        scoreChange: golfRounds.length >= 6 ? scoreChange : "0%",
+        girPercentage: `${Math.round(recentGirPercentage)}%`,
+        girChange: golfRounds.length >= 6 ? girChange : "0%",
+        puttsPerRound: recentAvgPutts.toFixed(1),
+        puttsChange: golfRounds.length >= 6 ? puttsChange : "0%"
       });
     } catch (error) {
       console.error("Error calculating stats:", error);
@@ -312,9 +464,9 @@ export default function Dashboard() {
                 <h3 className="text-gray-600 mb-2">Current HCP</h3>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl font-bold">{stats.currentHcp || "0.0"}</p>
-                  <span className="text-green-600 text-sm flex items-center gap-1">
+                  <span className={`text-sm flex items-center gap-1 ${parseFloat(stats.hcpChange) > 0 ? 'text-red-600' : 'text-green-600'}`}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d={parseFloat(stats.hcpChange) > 0 ? "M12 4V20M5 13L12 20L19 13" : "M12 20V4M5 11L12 4L19 11"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     {stats.hcpChange}
                   </span>
@@ -325,9 +477,9 @@ export default function Dashboard() {
                 <h3 className="text-gray-600 mb-2">Avg. Score</h3>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl font-bold">{stats.avgScore || "0"}</p>
-                  <span className="text-red-600 text-sm flex items-center gap-1">
+                  <span className={`text-sm flex items-center gap-1 ${parseFloat(stats.scoreChange) > 0 ? 'text-red-600' : 'text-green-600'}`}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d={parseFloat(stats.scoreChange) > 0 ? "M12 20V4M5 11L12 4L19 11" : "M12 4V20M5 13L12 20L19 13"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     {stats.scoreChange}
                   </span>
@@ -338,9 +490,9 @@ export default function Dashboard() {
                 <h3 className="text-gray-600 mb-2">GIR %</h3>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl font-bold">{stats.girPercentage || "0%"}</p>
-                  <span className="text-green-600 text-sm flex items-center gap-1">
+                  <span className={`text-sm flex items-center gap-1 ${parseFloat(stats.girChange) > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 20V4M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d={parseFloat(stats.girChange) > 0 ? "M12 20V4M5 11L12 4L19 11" : "M12 4V20M5 13L12 20L19 13"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     {stats.girChange}
                   </span>
@@ -351,9 +503,9 @@ export default function Dashboard() {
                 <h3 className="text-gray-600 mb-2">Putts Per Round</h3>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl font-bold">{stats.puttsPerRound || "0.0"}</p>
-                  <span className="text-red-600 text-sm flex items-center gap-1">
+                  <span className={`text-sm flex items-center gap-1 ${parseFloat(stats.puttsChange) > 0 ? 'text-red-600' : 'text-green-600'}`}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 4V20M5 13L12 20L19 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d={parseFloat(stats.puttsChange) > 0 ? "M12 20V4M5 11L12 4L19 11" : "M12 4V20M5 13L12 20L19 13"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     {stats.puttsChange}
                   </span>
@@ -361,6 +513,11 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Performance Analysis - now below Recent Performance */}
+        {golfRounds.length >= 6 && (
+          <PerformanceAnalysis allRounds={golfRounds} />
         )}
 
         {/* Interactive Features */}

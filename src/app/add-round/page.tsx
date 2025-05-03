@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from '@supabase/supabase-js';
 import ScoreNumberGrid from '@/components/ScoreNumberGrid';
 import { auth } from "@/firebase";
+import ScorecardUpload from '@/components/ScorecardUpload';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -45,6 +46,24 @@ type TeeBox = {
   rating: number;
 };
 
+interface ScorecardData {
+  front_nine_scores: number[];
+  back_nine_scores: number[];
+  front_nine_putts: number[];
+  back_nine_putts: number[];
+  front_nine_fairways: string[];
+  back_nine_fairways: string[];
+  front_nine_gir: boolean[];
+  back_nine_gir: boolean[];
+  total_score: number;
+  total_putts: number;
+  total_fairways_hit: number;
+  total_gir: number;
+  course_name: string;
+  tee_box_name: string;
+  date_played: string;
+}
+
 export default function AddRound() {
   const [isManualEntry, setIsManualEntry] = useState(false);
   const [courses, setCourses] = useState<GolfCourse[]>([]);
@@ -76,6 +95,7 @@ export default function AddRound() {
     position: { top: 0, left: 0 }
   });
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch courses on component mount
   useEffect(() => {
@@ -233,6 +253,86 @@ export default function AddRound() {
     }
   };
 
+  const handleScorecardProcessed = async (data: ScorecardData) => {
+    try {
+      // Find course and tee box IDs
+      const { data: courseData, error: courseError } = await supabase
+        .from('golf_courses')
+        .select('id')
+        .eq('name', data.course_name)
+        .single();
+
+      if (courseError || !courseData) {
+        throw new Error('Course not found');
+      }
+
+      const { data: teeBoxData, error: teeBoxError } = await supabase
+        .from('tee_boxes')
+        .select('id')
+        .eq('course_id', courseData.id)
+        .eq('tee_name', data.tee_box_name)
+        .single();
+
+      if (teeBoxError || !teeBoxData) {
+        throw new Error('Tee box not found');
+      }
+
+      // Get current user
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user's ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('firebase_uid', currentUser.uid)
+        .single();
+
+      if (userError || !userData) {
+        throw new Error('User not found');
+      }
+
+      // Prepare round data
+      const roundData = {
+        user_id: userData.id,
+        date_played: data.date_played,
+        submission_type: 'scanned',
+        front_nine_scores: data.front_nine_scores,
+        back_nine_scores: data.back_nine_scores,
+        front_nine_putts: data.front_nine_putts,
+        back_nine_putts: data.back_nine_putts,
+        front_nine_fairways: data.front_nine_fairways,
+        back_nine_fairways: data.back_nine_fairways,
+        front_nine_gir: data.front_nine_gir,
+        back_nine_gir: data.back_nine_gir,
+        total_score: data.total_score,
+        total_putts: data.total_putts,
+        total_fairways_hit: data.total_fairways_hit,
+        total_gir: data.total_gir,
+        course_id: courseData.id,
+        tee_box_id: teeBoxData.id
+      };
+
+      // Insert into Supabase
+      const { error: insertError } = await supabase
+        .from('golf_rounds')
+        .insert(roundData);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      // Show success message and redirect
+      alert('Round saved successfully!');
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error('Error saving round:', error);
+      setError('Failed to save round. Please try again.');
+    }
+  };
+
   const handleSaveRound = async () => {
     try {
       // Get current user
@@ -241,19 +341,14 @@ export default function AddRound() {
         throw new Error('User not authenticated');
       }
 
-      // Get user's ID directly from the users table using Firebase UID
+      // Get user's ID
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id')
         .eq('firebase_uid', currentUser.uid)
         .single();
 
-      if (userError) {
-        console.error('Error fetching user:', userError);
-        throw new Error('Error fetching user data');
-      }
-
-      if (!userData) {
+      if (userError || !userData) {
         throw new Error('User not found');
       }
 
@@ -288,15 +383,12 @@ export default function AddRound() {
         tee_box_id: selectedTeeBox
       };
 
-      console.log('Saving round data:', roundData);
-
       // Insert into Supabase
       const { error: insertError } = await supabase
         .from('golf_rounds')
         .insert(roundData);
 
       if (insertError) {
-        console.error('Insert error:', insertError);
         throw insertError;
       }
 
@@ -305,7 +397,7 @@ export default function AddRound() {
       window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error saving round:', error);
-      alert('Error saving round. Please try again.');
+      setError('Failed to save round. Please try again.');
     }
   };
 
@@ -365,19 +457,16 @@ export default function AddRound() {
                   </p>
                 </div>
 
-                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-12 max-w-lg mx-auto">
-                  <div className="flex flex-col items-center">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400 mb-4">
-                      <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M4 16L8 12L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14 10L16 8L20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="9" cy="8" r="2" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
-                    <button className="text-green-500 font-medium mb-2">Upload a file</button>
-                    <p className="text-gray-500 mb-1">or drag and drop</p>
-                    <p className="text-gray-400 text-sm">PNG, JPG, GIF up to 10MB</p>
+                <ScorecardUpload
+                  onScorecardProcessed={handleScorecardProcessed}
+                  onError={setError}
+                />
+
+                {error && (
+                  <div className="mt-4 text-red-500 text-center">
+                    {error}
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="space-y-8">
