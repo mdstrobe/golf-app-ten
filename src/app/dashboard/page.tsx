@@ -7,9 +7,6 @@ import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { supabase } from "@/supabase";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 interface UserData {
   id: number;
   firebase_uid: string;
@@ -37,12 +34,10 @@ interface GolfRound {
 }
 
 interface PerformanceAnalysisProps {
-  recentRounds?: GolfRound[];
-  previousRounds?: GolfRound[];
   allRounds: GolfRound[];
 }
 
-const PerformanceAnalysis: React.FC<PerformanceAnalysisProps> = ({ recentRounds = [], previousRounds = [], allRounds }) => {
+const PerformanceAnalysis: React.FC<PerformanceAnalysisProps> = ({ allRounds }) => {
   const [analysis, setAnalysis] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
@@ -73,7 +68,7 @@ const PerformanceAnalysis: React.FC<PerformanceAnalysisProps> = ({ recentRounds 
       generateAnalysis();
     }
   }, [allRounds]);
-
+  
   // Format the Gemini response for branding
   const renderFormattedAnalysis = () => {
     if (!analysis) return null;

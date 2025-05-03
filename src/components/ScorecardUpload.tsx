@@ -33,6 +33,21 @@ interface ScorecardUploadProps {
   onError: (error: string) => void;
 }
 
+interface EditHole {
+  hole: number;
+  score: number | string;
+  putts: number | string;
+  fairway: string;
+  gir: boolean;
+}
+
+interface NumberGridState {
+  isOpen: boolean;
+  type: 'score' | 'putts';
+  holeIndex: number;
+  position: { top: number; left: number };
+}
+
 export default function ScorecardUpload({ onScorecardProcessed, onError }: ScorecardUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -48,8 +63,8 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   const [filteredCourses, setFilteredCourses] = useState<{ id: string; name: string }[]>([]);
   const [searchTeeBox, setSearchTeeBox] = useState('');
   const [filteredTeeBoxes, setFilteredTeeBoxes] = useState<{ id: string; tee_name: string }[]>([]);
-  const [editHoles, setEditHoles] = useState<any[]>([]);
-  const [numberGrid, setNumberGrid] = useState({ isOpen: false, type: 'score', holeIndex: 0, position: { top: 0, left: 0 } });
+  const [editHoles, setEditHoles] = useState<EditHole[]>([]);
+  const [numberGrid, setNumberGrid] = useState<NumberGridState>({ isOpen: false, type: 'score', holeIndex: 0, position: { top: 0, left: 0 } });
 
   const golfPhrases = [
     'Teeing Off...',
@@ -131,7 +146,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   }, [searchTeeBox, teeBoxes]);
 
   // Editable handlers
-  const handleEditHole = (idx: number, field: string, value: any) => {
+  const handleEditHole = (idx: number, field: keyof EditHole, value: string | number | boolean) => {
     setEditHoles(prev => prev.map((h, i) => i === idx ? { ...h, [field]: value } : h));
   };
   const openNumberGrid = (type: 'score' | 'putts', idx: number, e: React.MouseEvent) => {
@@ -140,7 +155,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   };
   const handleNumberGridSelect = (value: string) => {
     if (numberGrid.isOpen) {
-      handleEditHole(numberGrid.holeIndex, numberGrid.type, value ? parseInt(value) : '');
+      handleEditHole(numberGrid.holeIndex, numberGrid.type as keyof EditHole, value ? parseInt(value) : '');
     }
   };
 
@@ -302,7 +317,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isProcessing]);
+  }, [isProcessing, golfPhrases.length]);
 
   if (showReview && processedData) {
     return (
