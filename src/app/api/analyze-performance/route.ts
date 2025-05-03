@@ -1,6 +1,15 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
+interface Round {
+  date_played: string;
+  total_score: number;
+  total_putts: number;
+  total_gir: number;
+  front_nine_scores: number[];
+  back_nine_scores: number[];
+}
+
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -9,13 +18,13 @@ export async function POST(request: Request) {
     const { recentRounds, previousRounds, allRounds } = await request.json();
 
     // Use allRounds if provided, otherwise fallback to recentRounds + previousRounds
-    let rounds = allRounds || [...recentRounds, ...previousRounds];
+    const rounds = allRounds || [...recentRounds, ...previousRounds];
     if (!Array.isArray(rounds) || rounds.length === 0) {
       return NextResponse.json({ error: 'No rounds provided' }, { status: 400 });
     }
 
     // Sort rounds by date (most recent first)
-    rounds.sort((a: any, b: any) => new Date(b.date_played).getTime() - new Date(a.date_played).getTime());
+    rounds.sort((a: Round, b: Round) => new Date(b.date_played).getTime() - new Date(a.date_played).getTime());
 
     // Get the most recent 5 rounds
     const recent5 = rounds.slice(0, 5);
@@ -23,15 +32,15 @@ export async function POST(request: Request) {
     const previous5 = rounds.slice(5, 10);
 
     // Calculate averages for recent rounds
-    const recentAvgScore = recent5.reduce((sum: number, round: any) => sum + (round.total_score || 0), 0) / (recent5.length || 1);
-    const recentAvgPutts = recent5.reduce((sum: number, round: any) => sum + (round.total_putts || 0), 0) / (recent5.length || 1);
-    const recentTotalGir = recent5.reduce((sum: number, round: any) => sum + (round.total_gir || 0), 0);
+    const recentAvgScore = recent5.reduce((sum: number, round: Round) => sum + (round.total_score || 0), 0) / (recent5.length || 1);
+    const recentAvgPutts = recent5.reduce((sum: number, round: Round) => sum + (round.total_putts || 0), 0) / (recent5.length || 1);
+    const recentTotalGir = recent5.reduce((sum: number, round: Round) => sum + (round.total_gir || 0), 0);
     const recentGirPercentage = (recentTotalGir / (recent5.length * 18)) * 100;
 
     // Calculate averages for previous rounds
-    const previousAvgScore = previous5.length > 0 ? previous5.reduce((sum: number, round: any) => sum + (round.total_score || 0), 0) / previous5.length : 0;
-    const previousAvgPutts = previous5.length > 0 ? previous5.reduce((sum: number, round: any) => sum + (round.total_putts || 0), 0) / previous5.length : 0;
-    const previousTotalGir = previous5.length > 0 ? previous5.reduce((sum: number, round: any) => sum + (round.total_gir || 0), 0) : 0;
+    const previousAvgScore = previous5.length > 0 ? previous5.reduce((sum: number, round: Round) => sum + (round.total_score || 0), 0) / previous5.length : 0;
+    const previousAvgPutts = previous5.length > 0 ? previous5.reduce((sum: number, round: Round) => sum + (round.total_putts || 0), 0) / previous5.length : 0;
+    const previousTotalGir = previous5.length > 0 ? previous5.reduce((sum: number, round: Round) => sum + (round.total_gir || 0), 0) : 0;
     const previousGirPercentage = previous5.length > 0 ? (previousTotalGir / (previous5.length * 18)) * 100 : 0;
 
     // Calculate hole-by-hole averages for recent5
@@ -40,7 +49,7 @@ export async function POST(request: Request) {
       par4: { score: 0, count: 0 },
       par5: { score: 0, count: 0 }
     };
-    recent5.forEach((round: any) => {
+    recent5.forEach((round: Round) => {
       if (round.front_nine_scores && round.back_nine_scores) {
         const allScores = [...round.front_nine_scores, ...round.back_nine_scores];
         allScores.forEach((score, index) => {
@@ -102,7 +111,7 @@ export async function POST(request: Request) {
     const text = response.text();
 
     return NextResponse.json({ analysis: text });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to generate performance analysis' },
       { status: 500 }

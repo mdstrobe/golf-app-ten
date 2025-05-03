@@ -33,7 +33,6 @@ interface Round {
 export default function RecentRounds() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalRounds, setTotalRounds] = useState(0);
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -171,7 +170,6 @@ export default function RecentRounds() {
         }) || [];
 
         setRounds(transformedRounds);
-        setTotalRounds(transformedRounds.length);
       } catch (error) {
         console.error('Error fetching rounds:', error);
       } finally {

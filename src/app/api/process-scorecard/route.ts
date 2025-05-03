@@ -1,6 +1,27 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
+interface ScorecardData {
+  user_id: string;
+  date_played: string;
+  submission_type: string;
+  front_nine_scores: number[];
+  back_nine_scores: number[];
+  front_nine_putts: number[];
+  back_nine_putts: number[];
+  front_nine_fairways: boolean[];
+  back_nine_fairways: boolean[];
+  front_nine_gir: boolean[];
+  back_nine_gir: boolean[];
+  total_score: number;
+  total_putts: number;
+  total_fairways_hit: number;
+  total_gir: number;
+  course_id: string;
+  tee_box_id: string;
+  [key: string]: string | number | number[] | boolean[] | undefined;
+}
+
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -104,7 +125,7 @@ No extra explanation is needed.`,
     
     // Extract the first JSON object from the response text
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    let jsonText = jsonMatch ? jsonMatch[0] : text;
+    const jsonText = jsonMatch ? jsonMatch[0] : text;
     if (!jsonMatch) {
       console.warn('No JSON object found, using full text');
     }
@@ -146,7 +167,7 @@ No extra explanation is needed.`,
   }
 }
 
-function validateScorecardData(data: any): boolean {
+function validateScorecardData(data: ScorecardData): boolean {
   const requiredArrays = [
     'front_nine_scores',
     'back_nine_scores',

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { auth } from "@/firebase";
 import ScoreNumberGrid from './ScoreNumberGrid';
 
 // Initialize Supabase client
@@ -37,7 +36,6 @@ interface ScorecardUploadProps {
 export default function ScorecardUpload({ onScorecardProcessed, onError }: ScorecardUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingStep, setProcessingStep] = useState<string>('');
   const [processedData, setProcessedData] = useState<ScorecardData | null>(null);
   const [showReview, setShowReview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -192,7 +190,6 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
     }
 
     setIsProcessing(true);
-    setProcessingStep('Converting image...');
     console.log('Converting image to base64...');
 
     try {
@@ -204,7 +201,6 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
         console.log('Image converted to base64. Length:', base64Image.length);
         console.log('Base64 prefix:', base64Image.substring(0, 50) + '...');
         
-        setProcessingStep('Processing scorecard...');
         console.log('Sending request to process scorecard...');
         
         try {
