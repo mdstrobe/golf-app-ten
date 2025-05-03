@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { supabase } from "@/supabase";
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface UserData {
   id: number;
@@ -68,13 +67,13 @@ const PerformanceAnalysis: React.FC<PerformanceAnalysisProps> = ({ allRounds }) 
       generateAnalysis();
     }
   }, [allRounds]);
-  
+
   // Format the Gemini response for branding
   const renderFormattedAnalysis = () => {
     if (!analysis) return null;
     // Try to split by numbered or bolded sections
-    const majorMatch = analysis.match(/Major Insight[:：]?(.+?)(Specific Insight|Par [345]s? Insight|$)/is);
-    const specificMatch = analysis.match(/(Specific Insight|Par [345]s? Insight)[:：]?(.+)/is);
+    const majorMatch = analysis.match(/Major Insight[:：]?([\s\S]+?)(Specific Insight|Par [345]s? Insight|$)/i);
+    const specificMatch = analysis.match(/(Specific Insight|Par [345]s? Insight)[:：]?([\s\S]+)/i);
     const major = majorMatch ? majorMatch[1].trim() : '';
     const specific = specificMatch ? specificMatch[2].trim() : '';
     // Detect trend for color
