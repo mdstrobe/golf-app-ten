@@ -103,6 +103,71 @@ export default function RecentRounds() {
     return { avgScore, avgPutts, avgGir };
   };
 
+  const getFilteredRounds = (rounds: Round[]) => {
+    const currentYear = new Date().getFullYear().toString();
+    const lastYear = (new Date().getFullYear() - 1).toString();
+    
+    return rounds.filter(round => {
+      const roundYear = new Date(round.date_played).getFullYear().toString();
+      if (selectedYear === 'current') return roundYear === currentYear;
+      if (selectedYear === 'last') return roundYear === lastYear;
+      return true;
+    });
+  };
+
+  const getSortedRounds = (rounds: Round[]) => {
+    return [...rounds].sort((a, b) => {
+      if (sortBy === 'date') {
+        const aDate = new Date(a.date_played).getTime();
+        const bDate = new Date(b.date_played).getTime();
+        return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+      } else {
+        return sortOrder === 'asc' ? a.total_score - b.total_score : b.total_score - a.total_score;
+      }
+    });
+  };
+
+  const groupRoundsByDate = (rounds: Round[]) => {
+    const filteredRounds = getFilteredRounds(rounds);
+    const sortedRounds = getSortedRounds(filteredRounds);
+    
+    const grouped = sortedRounds.reduce((acc, round) => {
+      const date = new Date(round.date_played);
+      const year = date.getFullYear().toString();
+      const month = date.toLocaleString('default', { month: 'long' });
+      
+      if (!acc[year]) {
+        acc[year] = {};
+      }
+      if (!acc[year][month]) {
+        acc[year][month] = [];
+      }
+      acc[year][month].push(round);
+      return acc;
+    }, {} as Record<string, Record<string, Round[]>>);
+
+    // Sort months within each year
+    Object.keys(grouped).forEach(year => {
+      const monthOrder = Object.keys(grouped[year]).sort((a, b) => {
+        const monthA = new Date(Date.parse(`${a} 1, 2000`));
+        const monthB = new Date(Date.parse(`${b} 1, 2000`));
+        return sortOrder === 'desc' ? monthB.getTime() - monthA.getTime() : monthA.getTime() - monthB.getTime();
+      });
+      
+      const sortedMonths = {} as Record<string, Round[]>;
+      monthOrder.forEach(month => {
+        sortedMonths[month] = grouped[year][month].sort((a, b) => {
+          const dateA = new Date(a.date_played).getTime();
+          const dateB = new Date(b.date_played).getTime();
+          return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        });
+      });
+      grouped[year] = sortedMonths;
+    });
+
+    return grouped;
+  };
+
   useEffect(() => {
     const fetchRounds = async () => {
       try {
@@ -187,89 +252,120 @@ export default function RecentRounds() {
     fetchRounds();
   }, []);
 
-  // Filter rounds by selected year
-  const filteredRounds = selectedYear ? rounds.filter(r => new Date(r.date_played).getFullYear().toString() === selectedYear) : rounds;
+  const groupedRounds = groupRoundsByDate(rounds);
+  const years = Object.keys(groupedRounds).sort((a, b) => 
+    sortOrder === 'desc' ? parseInt(b) - parseInt(a) : parseInt(a) - parseInt(b)
+  );
 
-  // Calculate averages based on filtered rounds
-  const averages = calculateAverages(filteredRounds);
-
-  // Extract unique years from rounds
-  const years = Array.from(new Set(rounds.map(r => new Date(r.date_played).getFullYear().toString()))).sort((a, b) => b.localeCompare(a));
-
-  // Sort rounds
-  const sortedRounds = [...filteredRounds].sort((a, b) => {
-    if (sortBy === 'date') {
-      const aDate = new Date(a.date_played).getTime();
-      const bDate = new Date(b.date_played).getTime();
-      return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
-    } else {
-      return sortOrder === 'asc' ? a.total_score - b.total_score : b.total_score - a.total_score;
-    }
-  });
-
-  // Group rounds by month
-  const groupedByMonth: { [month: string]: Round[] } = {};
-  sortedRounds.forEach(round => {
-    const month = new Date(round.date_played).toLocaleString('default', { month: 'long' });
-    if (!groupedByMonth[month]) groupedByMonth[month] = [];
-    groupedByMonth[month].push(round);
-  });
-
-  // Modern pill-style filter bar
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with Page Title */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
-            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 flex items-center gap-2">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <div className="min-h-screen bg-gray-50 py-4">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Link 
+              href="/dashboard" 
+              className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current"
+              >
+                <path 
+                  d="M15 18L9 12L15 6" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
               </svg>
               <span>Back</span>
             </Link>
-
           </div>
-          {/* Search button placeholder */}
-          <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
-            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Total Rounds: {rounds.length}</span>
+          </div>
         </div>
-      </nav>
+      </div>
 
-      {/* Filter Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-1">
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-          <button
-            className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${selectedYear === '' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
-            onClick={() => { setSelectedYear(''); triggerHaptic(); }}
-          >
-            All Years
-          </button>
-          {years.map(year => (
+      {/* Stats Card */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-sm text-gray-500">Average Score</div>
+              <div className="text-xl font-semibold text-gray-900">{calculateAverages(rounds).avgScore}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-gray-500">Average Putts</div>
+              <div className="text-xl font-semibold text-gray-900">
+                {calculateAverages(rounds).avgPutts || '-'}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm text-gray-500">Average GIR</div>
+              <div className="text-xl font-semibold text-gray-900">
+                {calculateAverages(rounds).avgGir > 0 ? `${calculateAverages(rounds).avgGir}%` : '-'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Pills */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+        <div className="flex flex-wrap gap-2">
+          {/* Year filters */}
+          <div className="flex gap-2">
             <button
-              key={year}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${selectedYear === year ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
-              onClick={() => { setSelectedYear(year); triggerHaptic(); }}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                selectedYear === '' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+              onClick={() => { setSelectedYear(''); triggerHaptic(); }}
             >
-              {year}
+              All Time
             </button>
-          ))}
-          <div className="flex items-center gap-1 ml-2">
             <button
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${sortBy === 'date' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                selectedYear === 'current' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+              onClick={() => { setSelectedYear('current'); triggerHaptic(); }}
+            >
+              This Year
+            </button>
+            <button
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                selectedYear === 'last' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+              onClick={() => { setSelectedYear('last'); triggerHaptic(); }}
+            >
+              Last Year
+            </button>
+          </div>
+
+          {/* Sort options */}
+          <div className="flex gap-2 ml-auto">
+            <button
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                sortBy === 'date' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
               onClick={() => { setSortBy('date'); triggerHaptic(); }}
             >
               Date
             </button>
             <button
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${sortBy === 'score' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                sortBy === 'score' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
               onClick={() => { setSortBy('score'); triggerHaptic(); }}
             >
               Score
             </button>
             <button
-              className="ml-1 px-1.5 py-1.5 rounded-full bg-white border text-gray-700 hover:bg-green-100 text-xs"
+              className="px-3 py-1.5 rounded-full text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 transition"
               onClick={() => { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); triggerHaptic(); }}
               aria-label="Toggle sort order"
             >
@@ -279,71 +375,73 @@ export default function RecentRounds() {
         </div>
       </div>
 
-      {/* Slim Stats Card */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-2">
-        <div className="bg-white rounded-lg shadow-sm px-4 py-3 mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-          <div className="text-base font-semibold text-gray-900 text-center sm:text-left">{filteredRounds.length} Total</div>
-          <div className="flex flex-col sm:flex-row gap-1 sm:gap-6 text-xs sm:text-sm text-gray-600 items-center sm:items-end justify-center">
-            <span>Avg Score: <span className="font-bold text-gray-900">{averages.avgScore}</span></span>
-            <span>Avg Putts: <span className="font-bold text-gray-900">{averages.avgPutts > 0 ? averages.avgPutts : '-'}</span></span>
-            <span>Avg GIR: <span className="font-bold text-gray-900">{averages.avgGir > 0 ? `${averages.avgGir}%` : '-'}</span></span>
-          </div>
-        </div>
-      </div>
-
       {/* Rounds List */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
-          {loading ? (
-            <div className="p-6">
-              <div className="animate-pulse space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-gray-100 h-16 rounded-lg"></div>
-                ))}
-              </div>
+        {loading ? (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="animate-pulse space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-gray-100 h-16 rounded-lg"></div>
+              ))}
             </div>
-          ) : sortedRounds.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No rounds recorded yet.
-            </div>
-          ) : (
-            <div>
-              {sortedRounds.map((round) => (
-                <div key={round.id} className="flex items-center justify-between py-2 px-2 hover:bg-green-50 transition-colors">
-                  {/* Left: Course and details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 truncate">{round.course?.name || 'Unknown Course'}</div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 truncate mt-0.5">
-                      <span>{round.tee_box?.tee_name || 'Tee box unavailable'}</span>
-                      <span className="text-gray-400">•</span>
-                      <span>{round.date_played}</span>
-                    </div>
-                  </div>
-                  {/* Right: Score and delete, side by side and shrunk */}
-                  <div className="flex items-center min-w-[44px] ml-2 gap-2">
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#15803D] text-white font-bold text-base">
-                      {round.total_score}
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this round?')) {
-                          handleDeleteRound(round.id);
-                        }
-                      }}
-                      className="text-gray-300 hover:text-gray-600 transition-colors p-0.5"
-                      title="Delete round"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+          </div>
+        ) : rounds.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500">
+            No rounds recorded yet.
+          </div>
+        ) : (
+          years.map(year => (
+            <div key={year} className="mb-8">
+              {Object.entries(groupedRounds[year]).map(([month, monthRounds]) => (
+                <div key={`${year}-${month}`} className="mb-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">{`${month} ${year} rounds`}</h2>
+                  <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
+                    {monthRounds.map((round) => (
+                      <div key={round.id} className="flex items-center justify-between p-4 hover:bg-green-50 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#15803D] text-white font-bold text-lg">
+                              {round.total_score}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900">{round.course?.name || 'Unknown Course'}</div>
+                              <div className="text-sm text-gray-500">
+                                {new Date(round.date_played).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-sm text-gray-600">
+                            <div>{round.tee_box?.tee_name || 'Unknown Tees'}</div>
+                            <div className="text-right">{`${round.total_putts || '-'} putts`}</div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this round?')) {
+                                handleDeleteRound(round.id);
+                              }
+                            }}
+                            className="text-gray-300 hover:text-gray-600 transition-colors p-1"
+                            title="Delete round"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );
-} 
+}
