@@ -47,6 +47,11 @@ export default function ScoreNumberGrid({
 
   const handleSelect = (value: string) => {
     onSelect(value);
+    if (onNextHole) {
+      onNextHole();
+    } else {
+      onClose();
+    }
   };
 
   const numbers = type === 'putts' ? Array.from({ length: 8 }, (_, i) => i + 1) : Array.from({ length: 8 }, (_, i) => i + 1);
