@@ -62,3 +62,142 @@ body {
   pointer-events: none;
   z-index: 1;
 }
+
+/* Modal Animations */
+@keyframes slideInMobile {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutMobile {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes slideInDesktop {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutDesktop {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  transition: opacity 0.3s ease;
+}
+
+.modal-content {
+  animation: slideInMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-content.closing {
+  animation: slideOutMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  background-color: #E5E7EB;
+  border-radius: 2px;
+}
+
+.modal-search {
+  background-color: #F3F4F6;
+  border-radius: 10px;
+  padding: 12px 16px;
+  width: 100%;
+  border: none;
+  margin: 16px 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.modal-search::placeholder {
+  color: #9CA3AF;
+}
+
+.modal-list-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #F3F4F6;
+  background-color: white;
+  transition: background-color 0.2s;
+}
+
+.modal-list-item:active {
+  background-color: #F9FAFB;
+}
+
+.modal-list-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  margin-right: 16px;
+  object-fit: cover;
+}
+
+.modal-list-item-content {
+  flex: 1;
+}
+
+.modal-list-item-title {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.modal-list-item-subtitle {
+  color: #6B7280;
+  font-size: 14px;
+}
+
+@media (min-width: 640px) {
+  .modal-content {
+    animation: slideInDesktop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 85vh;
+    min-height: 50vh;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .modal-content.closing {
+    animation: slideOutDesktop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .modal-content::before {
+    display: none;
+  }
+}

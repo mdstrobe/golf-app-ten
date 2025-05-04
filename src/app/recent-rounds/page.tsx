@@ -30,6 +30,13 @@ interface Round {
   } | null;
 }
 
+// Haptic feedback helper
+function triggerHaptic() {
+  if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(10);
+  }
+}
+
 export default function RecentRounds() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,104 +218,87 @@ export default function RecentRounds() {
   // Modern pill-style filter bar
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with Page Title */}
       <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>Back to Dashboard</span>
-              </Link>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>Back</span>
+            </Link>
+
           </div>
+          {/* Search button placeholder */}
+          <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
+            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+          </button>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-6">
-        {/* Stats Card */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Round Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm text-gray-500">Total Rounds</div>
-              <div className="text-2xl font-bold text-gray-900">{filteredRounds.length}</div>
-            </div>
-            {filteredRounds.length > 0 && (
-              <>
-                <div>
-                  <div className="text-sm text-gray-500">Average Score</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {averages.avgScore}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Average Putts</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {averages.avgPutts > 0 ? averages.avgPutts : '-'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Average GIR</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {averages.avgGir > 0 ? `${averages.avgGir}%` : '-'}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Modern pill-style filter bar */}
-        <div className="flex gap-2 overflow-x-auto py-2 px-1 bg-gray-50 rounded-xl mb-6 scrollbar-hide">
+      {/* Filter Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-1">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
           <button
-            className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${selectedYear === '' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
-            onClick={() => setSelectedYear('')}
+            className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${selectedYear === '' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
+            onClick={() => { setSelectedYear(''); triggerHaptic(); }}
           >
             All Years
           </button>
           {years.map(year => (
             <button
               key={year}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${selectedYear === year ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
-              onClick={() => setSelectedYear(year)}
+              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${selectedYear === year ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
+              onClick={() => { setSelectedYear(year); triggerHaptic(); }}
             >
               {year}
             </button>
           ))}
-          <div className="flex items-center gap-1 ml-4">
+          <div className="flex items-center gap-1 ml-2">
             <button
-              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${sortBy === 'date' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
-              onClick={() => setSortBy('date')}
+              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${sortBy === 'date' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
+              onClick={() => { setSortBy('date'); triggerHaptic(); }}
             >
               Date
             </button>
             <button
-              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${sortBy === 'score' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
-              onClick={() => setSortBy('score')}
+              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap ${sortBy === 'score' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 border'}`}
+              onClick={() => { setSortBy('score'); triggerHaptic(); }}
             >
               Score
             </button>
             <button
-              className="ml-2 px-2 py-2 rounded-full bg-white border text-gray-700 hover:bg-green-100"
-              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="ml-1 px-1.5 py-1.5 rounded-full bg-white border text-gray-700 hover:bg-green-100 text-xs"
+              onClick={() => { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); triggerHaptic(); }}
               aria-label="Toggle sort order"
             >
               {sortOrder === 'asc' ? '↑' : '↓'}
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Rounds List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Slim Stats Card */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-2">
+        <div className="bg-white rounded-lg shadow-sm px-4 py-3 mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+          <div className="text-base font-semibold text-gray-900 text-center sm:text-left">{filteredRounds.length} Total</div>
+          <div className="flex flex-col sm:flex-row gap-1 sm:gap-6 text-xs sm:text-sm text-gray-600 items-center sm:items-end justify-center">
+            <span>Avg Score: <span className="font-bold text-gray-900">{averages.avgScore}</span></span>
+            <span>Avg Putts: <span className="font-bold text-gray-900">{averages.avgPutts > 0 ? averages.avgPutts : '-'}</span></span>
+            <span>Avg GIR: <span className="font-bold text-gray-900">{averages.avgGir > 0 ? `${averages.avgGir}%` : '-'}</span></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Rounds List */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
           {loading ? (
             <div className="p-6">
               <div className="animate-pulse space-y-4">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-gray-100 h-24 rounded-lg"></div>
+                  <div key={i} className="bg-gray-100 h-16 rounded-lg"></div>
                 ))}
               </div>
             </div>
@@ -318,68 +308,42 @@ export default function RecentRounds() {
             </div>
           ) : (
             <div>
-              {Object.entries(groupedByMonth).map(([month, monthRounds]) => (
-                <div key={month} className="mb-6">
-                  <div className="bg-gray-50 px-6 py-2 text-lg font-semibold text-gray-700 rounded-t-lg border-b border-gray-200">{month}</div>
-                  <div className="divide-y divide-gray-100">
-                    {monthRounds.map((round) => (
-                      <div key={round.id} className="p-4 hover:bg-green-50 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-medium text-gray-900 truncate">
-                              {round.course?.name || 'Unknown Course'}
-                            </h3>
-                            <span className="text-xs text-gray-500 truncate">{round.course ? `${round.course.city}, ${round.course.state}` : 'Location unavailable'}</span>
-                          </div>
-                          <div className="flex gap-4 mt-2 text-sm text-gray-600">
-                            <span>Date: {new Date(round.date_played).toLocaleDateString()}</span>
-                            <span>Score: <span className="font-semibold text-gray-900">{round.total_score}</span></span>
-                            <span>Putts: {round.total_putts}</span>
-                            <span>Fairways: {Math.round((round.total_fairways_hit / 14) * 100)}%</span>
-                            <span>GIR: {Math.round((round.total_gir / 18) * 100)}%</span>
-                          </div>
-                          {round.tee_box && (
-                            <div className="mt-1 text-xs text-gray-500">
-                              {round.tee_box.tee_name} • Rating: {round.tee_box.rating} • Slope: {round.tee_box.slope}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end min-w-[80px]">
-                          <div className="flex items-center gap-2">
-                            <div className="text-right">
-                              <div className="text-2xl font-bold text-green-700">{round.total_score}</div>
-                              <div className="text-xs text-gray-500">{new Date(round.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
-                            </div>
-                            <Link href={`/edit-round/${round.id}`} className="text-gray-400 hover:text-gray-600 transition-colors">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                              </svg>
-                            </Link>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (window.confirm('Are you sure you want to delete this round?')) {
-                                  handleDeleteRound(round.id);
-                                }
-                              }}
-                              className="text-red-400 hover:text-red-600 transition-colors"
-                              title="Delete round"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+              {sortedRounds.map((round) => (
+                <div key={round.id} className="flex items-center justify-between py-2 px-2 hover:bg-green-50 transition-colors">
+                  {/* Left: Course and details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-900 truncate">{round.course?.name || 'Unknown Course'}</div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 truncate mt-0.5">
+                      <span>{round.tee_box?.tee_name || 'Tee box unavailable'}</span>
+                      <span className="text-gray-400">•</span>
+                      <span>{round.date_played}</span>
+                    </div>
+                  </div>
+                  {/* Right: Score and delete, side by side and shrunk */}
+                  <div className="flex items-center min-w-[44px] ml-2 gap-2">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#15803D] text-white font-bold text-base">
+                      {round.total_score}
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this round?')) {
+                          handleDeleteRound(round.id);
+                        }
+                      }}
+                      className="text-gray-300 hover:text-gray-600 transition-colors p-0.5"
+                      title="Delete round"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 } 

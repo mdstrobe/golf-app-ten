@@ -8,7 +8,6 @@ interface ScoreNumberGridProps {
   type: 'score' | 'putts';
   position: { top: number; left: number };
   holeNumber: number;
-  onNextHole: () => void;
 }
 
 export default function ScoreNumberGrid({ 
@@ -18,7 +17,7 @@ export default function ScoreNumberGrid({
   par, 
   type, 
   holeNumber,
-  onNextHole
+  position
 }: ScoreNumberGridProps) {
   if (!isOpen) return null;
 
@@ -47,10 +46,6 @@ export default function ScoreNumberGrid({
 
   const handleSelect = (value: string) => {
     onSelect(value);
-    if (value !== '') {
-      onNextHole();
-    }
-    onClose();
   };
 
   const numbers = type === 'putts' ? Array.from({ length: 8 }, (_, i) => i + 1) : Array.from({ length: 8 }, (_, i) => i + 1);

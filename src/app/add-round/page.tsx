@@ -96,6 +96,7 @@ export default function AddRound() {
   });
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [datePlayed, setDatePlayed] = useState('');
 
   // Fetch courses on component mount
   useEffect(() => {
@@ -247,12 +248,6 @@ export default function AddRound() {
     });
   };
 
-  const handleNextHole = () => {
-    if (currentHoleIndex < 17) {
-      setCurrentHoleIndex(currentHoleIndex + 1);
-    }
-  };
-
   const handleScorecardProcessed = async (data: ScorecardData) => {
     try {
       // Find course and tee box IDs
@@ -365,7 +360,7 @@ export default function AddRound() {
       // Prepare round data
       const roundData = {
         user_id: userData.id,
-        date_played: new Date().toISOString().split('T')[0], // Today's date
+        date_played: datePlayed,
         submission_type: 'manual',
         front_nine_scores: frontNineScores,
         back_nine_scores: backNineScores,
@@ -533,6 +528,8 @@ export default function AddRound() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">Date Played</label>
                       <input
                         type="date"
+                        value={datePlayed}
+                        onChange={e => setDatePlayed(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#15803D] focus:border-transparent"
                       />
                     </div>
@@ -1019,12 +1016,36 @@ export default function AddRound() {
         <ScoreNumberGrid
           isOpen={numberGrid.isOpen}
           onClose={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
-          onSelect={(value) => handleHoleChange(numberGrid.holeIndex, numberGrid.type, value)}
+          onSelect={(value) => {
+            handleHoleChange(numberGrid.holeIndex, numberGrid.type, value);
+            if (value !== '' && numberGrid.holeIndex < 17) {
+              // Advance to next hole
+              const nextHoleIndex = numberGrid.holeIndex + 1;
+              const nextInput = document.querySelector(`input[data-hole="${nextHoleIndex}"][data-type="${numberGrid.type}"]`);
+              setNumberGrid(prev => ({
+                ...prev,
+                isOpen: true,
+                holeIndex: nextHoleIndex,
+                position: (() => {
+                  if (nextInput) {
+                    const rect = nextInput.getBoundingClientRect();
+                    return {
+                      top: rect.bottom + window.scrollY + 8,
+                      left: rect.left + rect.width / 2
+                    };
+                  }
+                  return prev.position;
+                })(),
+              }));
+            } else {
+              // Close if last hole or cleared
+              setNumberGrid(prev => ({ ...prev, isOpen: false }));
+            }
+          }}
           par={parseInt(holes[numberGrid.holeIndex]?.par || '4')}
           type={numberGrid.type}
           position={numberGrid.position}
           holeNumber={numberGrid.holeIndex + 1}
-          onNextHole={handleNextHole}
         />
       </main>
     </div>
