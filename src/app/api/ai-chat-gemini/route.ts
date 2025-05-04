@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       geminiData.candidates?.[0]?.content?.parts?.[0] ||
       'No answer from AI.';
     return new Response(JSON.stringify({ answer }), { status: 200 });
-  } catch (e) {
+  } catch (error) {
     return new Response(JSON.stringify({ answer: 'Error contacting Gemini API.' }), { status: 500 });
   }
 } 

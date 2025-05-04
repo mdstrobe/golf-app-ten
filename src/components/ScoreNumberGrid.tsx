@@ -16,8 +16,7 @@ export default function ScoreNumberGrid({
   onSelect, 
   par, 
   type, 
-  holeNumber,
-  position
+  holeNumber
 }: ScoreNumberGridProps) {
   if (!isOpen) return null;
 

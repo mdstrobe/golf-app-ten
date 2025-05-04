@@ -94,7 +94,6 @@ export default function AddRound() {
     holeIndex: 0,
     position: { top: 0, left: 0 }
   });
-  const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [datePlayed, setDatePlayed] = useState('');
 

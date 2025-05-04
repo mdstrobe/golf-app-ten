@@ -154,7 +154,7 @@ function AIPoweredChatBox({ allRounds }: { allRounds: GolfRound[] }) {
       if (!res.ok) throw new Error('Failed to get AI response');
       const data = await res.json();
       setMessages((prev) => [...prev, { role: 'ai', text: data.answer }]);
-    } catch (e) {
+    } catch (error) {
       setError('Unable to get AI response. Please try again.');
     } finally {
       setLoading(false);
