@@ -154,7 +154,8 @@ function AIPoweredChatBox({ allRounds }: { allRounds: GolfRound[] }) {
       if (!res.ok) throw new Error('Failed to get AI response');
       const data = await res.json();
       setMessages((prev) => [...prev, { role: 'ai', text: data.answer }]);
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('AI chat error:', error);
       setError('Unable to get AI response. Please try again.');
     } finally {
       setLoading(false);
@@ -507,9 +508,7 @@ export default function Dashboard() {
                       className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       Sign Out
                     </button>
