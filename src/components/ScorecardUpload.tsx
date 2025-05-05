@@ -66,6 +66,14 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   const [editHoles, setEditHoles] = useState<EditHole[]>([]);
   const [numberGrid, setNumberGrid] = useState<NumberGridState>({ isOpen: false, type: 'score', holeIndex: 0, position: { top: 0, left: 0 } });
 
+  // Calculate GIR based on score and putts
+  const calculateGIR = (score: number | string, putts: number | string): boolean => {
+    if (!score || !putts) return false;
+    const scoreNum = Number(score);
+    const puttsNum = Number(putts);
+    return scoreNum - puttsNum <= 2;
+  };
+
   const golfPhrases = [
     'Teeing Off...',
     'Hitting the Approach...',
@@ -115,19 +123,22 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
 
   // When processedData changes, initialize editHoles
   useEffect(() => {
-    if (showReview && processedData) {
-      setEditHoles(Array.from({ length: 18 }, (_, i) => {
-        const isFront = i < 9;
-        return {
+    if (processedData) {
+      const holes: EditHole[] = [];
+      for (let i = 0; i < 18; i++) {
+        const isBackNine = i >= 9;
+        const idx = isBackNine ? i - 9 : i;
+        holes.push({
           hole: i + 1,
-          score: isFront ? processedData.front_nine_scores[i] : processedData.back_nine_scores[i - 9],
-          putts: isFront ? processedData.front_nine_putts[i] : processedData.back_nine_putts[i - 9],
-          fairway: isFront ? processedData.front_nine_fairways[i] : processedData.back_nine_fairways[i - 9],
-          gir: isFront ? processedData.front_nine_gir[i] : processedData.back_nine_gir[i - 9],
-        };
-      }));
+          score: isBackNine ? processedData.back_nine_scores[idx] : processedData.front_nine_scores[idx],
+          putts: isBackNine ? processedData.back_nine_putts[idx] : processedData.front_nine_putts[idx],
+          fairway: (isBackNine ? processedData.back_nine_fairways[idx] : processedData.front_nine_fairways[idx]) || '',
+          gir: false // GIR will be calculated dynamically
+        });
+      }
+      setEditHoles(holes);
     }
-  }, [showReview, processedData]);
+  }, [processedData]);
 
   // Filter courses/tee boxes for search
   useEffect(() => {
@@ -273,8 +284,8 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
       const back_nine_putts = editHoles.slice(9).map(h => Number(h.putts) || 0);
       const front_nine_fairways = editHoles.slice(0, 9).map(h => h.fairway || '');
       const back_nine_fairways = editHoles.slice(9).map(h => h.fairway || '');
-      const front_nine_gir = editHoles.slice(0, 9).map(h => !!h.gir);
-      const back_nine_gir = editHoles.slice(9).map(h => !!h.gir);
+      const front_nine_gir = editHoles.slice(0, 9).map(h => calculateGIR(h.score, h.putts));
+      const back_nine_gir = editHoles.slice(9).map(h => calculateGIR(h.score, h.putts));
       const updatedData = {
         ...processedData,
         course_name: processedData.course_name || (courses.find(c => c.id === selectedCourse)?.name ?? ''),
@@ -409,7 +420,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
             <p className="text-sm text-gray-600">Total Score: {editHoles.reduce((a, h) => a + (Number(h.score) || 0), 0)}</p>
             <p className="text-sm text-gray-600">Total Putts: {editHoles.reduce((a, h) => a + (Number(h.putts) || 0), 0)}</p>
             <p className="text-sm text-gray-600">Fairways Hit: {editHoles.filter(h => h.fairway === 'hit').length}/18</p>
-            <p className="text-sm text-gray-600">GIR: {editHoles.filter(h => h.gir).length}/18</p>
+            <p className="text-sm text-gray-600">GIR: {editHoles.filter(h => calculateGIR(h.score, h.putts)).length}/18</p>
           </div>
         </div>
         {/* Editable Hole-by-Hole Table */}
@@ -464,15 +475,13 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
                         <option value="right">Right</option>
                       </select>
                     </td>
-                    {/* Editable GIR */}
+                    {/* GIR (auto-calculated) */}
                     <td className="border px-2 py-1">
-                      <button
-                        className={`w-10 h-8 border rounded ${h.gir ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-400'}`}
-                        onClick={() => handleEditHole(idx, 'gir', !h.gir)}
-                        type="button"
-                      >
-                        {h.gir ? 'Yes' : 'No'}
-                      </button>
+                      <div className="h-7 flex items-center justify-center">
+                        <span className={`text-base ${calculateGIR(h.score, h.putts) ? 'text-[#15803D]' : 'text-gray-300'}`}>
+                          ●
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 ))}

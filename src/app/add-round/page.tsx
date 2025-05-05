@@ -220,8 +220,8 @@ export default function AddRound() {
     if (!score || !putts) return null;
     const scoreNum = parseInt(score);
     const puttsNum = parseInt(putts);
-    // GIR is true if score - putts <= par - 2
-    // For now assuming par 4, we'll update this when course selection is implemented
+    // GIR is true if (score - putts) <= 2, meaning player reached the green
+    // with enough strokes left for two putts
     return scoreNum - puttsNum <= 2;
   };
 
@@ -299,12 +299,18 @@ export default function AddRound() {
         back_nine_putts: data.back_nine_putts,
         front_nine_fairways: data.front_nine_fairways,
         back_nine_fairways: data.back_nine_fairways,
-        front_nine_gir: data.front_nine_gir,
-        back_nine_gir: data.back_nine_gir,
+        front_nine_gir: data.front_nine_scores.map((score, i) => 
+          score - data.front_nine_putts[i] <= 2
+        ),
+        back_nine_gir: data.back_nine_scores.map((score, i) => 
+          score - data.back_nine_putts[i] <= 2
+        ),
         total_score: data.total_score,
         total_putts: data.total_putts,
         total_fairways_hit: data.total_fairways_hit,
-        total_gir: data.total_gir,
+        total_gir: [...data.front_nine_scores.map((score, i) => score - data.front_nine_putts[i] <= 2),
+                    ...data.back_nine_scores.map((score, i) => score - data.back_nine_putts[i] <= 2)]
+                   .filter(Boolean).length,
         course_id: courseData.id,
         tee_box_id: teeBoxData.id
       };

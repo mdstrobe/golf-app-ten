@@ -551,7 +551,7 @@ export default function Dashboard() {
         {/* Performance Stats */}
         {isLoading ? (
           <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-            <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
+      <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6 last:border-0">
@@ -564,8 +564,8 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm px-4 py-3 mb-6">
-            <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 className="text-lg font-bold mb-6">Recent Performance</h2>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="flex flex-wrap gap-2 w-full justify-between">
                 {/* HCP */}
@@ -608,122 +608,148 @@ export default function Dashboard() {
 function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
   const [showChat, setShowChat] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
-  const [showSimulate, setShowSimulate] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm">
-      <h2 className="text-xl font-bold mb-6">Interactives</h2>
-      <div className="flex flex-col gap-3">
-        {/* Ask Fairway AI */}
-        <button
-          onClick={() => setShowChat(true)}
-          className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
-        >
-          <div className="flex items-center gap-3">
-            <div className="text-[#15803D]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 8V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+    <>
+      {/* Course Hub */}
+      <div className="bg-white p-6 rounded-xl shadow-sm mb-6">
+        <h2 className="text-lg font-bold mb-4">Course Hub</h2>
+        <div className="flex flex-col gap-3">
+          {/* Explore Courses */}
+          <button
+            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
+            onClick={() => alert('Course Explorer coming soon!')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-[#15803D]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5.02944 7.02944 1 12 1C16.9706 1 21 5.02944 21 10Z" stroke="currentColor" strokeWidth="2"/>
+                  <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <span className="text-gray-900 font-medium">Explore Courses</span>
+                <p className="text-sm text-gray-500">Browse/select courses for round entry or planning.</p>
+              </div>
             </div>
-            <div className="text-left">
-              <span className="text-gray-900 font-medium">Ask Fairway AI</span>
-              <p className="text-sm text-gray-500">Chat with AI about your game</p>
-            </div>
-          </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
-            <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {/* Analyze Game (AI-Powered Insights) */}
-        <button
-          onClick={() => setShowInsights(true)}
-          className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
-        >
-          <div className="flex items-center gap-3">
-            <div className="text-[#15803D]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 9L12 3L21 9V21H3V9Z" stroke="currentColor" strokeWidth="2"/>
-                <path d="M9 21V12H15V21" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-            </div>
-            <div className="text-left">
-              <span className="text-gray-900 font-medium">Analyze Game</span>
-              <p className="text-sm text-gray-500">AI-powered insights</p>
-            </div>
-          </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
-            <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {/* Simulate Round */}
-        <button
-          onClick={() => setShowSimulate(true)}
-          className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
-        >
-          <div className="flex items-center gap-3">
-            <div className="text-[#15803D]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 8V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div className="text-left">
-              <span className="text-gray-900 font-medium">Simulate Round</span>
-              <p className="text-sm text-gray-500">Project a round using your stats</p>
-            </div>
-          </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
-            <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {/* Other interactives (disabled) */}
-        <button
-          disabled
-          className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative opacity-75"
-        >
-          <div className="flex items-center gap-3">
-            <div className="text-[#15803D]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5.02944 7.02944 1 12 1C16.9706 1 21 5.02944 21 10Z" stroke="currentColor" strokeWidth="2"/>
-                <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-            </div>
-            <div className="text-left">
-              <span className="text-gray-900 font-medium">View Courses</span>
-              <p className="text-sm text-gray-500">Browse local courses</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[#15803D] font-medium">Coming Soon</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
               <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </div>
-        </button>
-        <button
-          disabled
-          className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative opacity-75"
-        >
-          <div className="flex items-center gap-3">
-            <div className="text-[#15803D]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5Z" stroke="currentColor" strokeWidth="2"/>
-                <path d="M7 9H17M7 13H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+          </button>
+          {/* Course Notes (Coming Soon) */}
+          <button
+            disabled
+            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative opacity-75"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-[#15803D]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M7 9H17M7 13H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <span className="text-gray-900 font-medium">Course Notes</span>
+                <p className="text-sm text-gray-500">Save and review notes for each course.</p>
+              </div>
             </div>
-            <div className="text-left">
-              <span className="text-gray-900 font-medium">PGA News</span>
-              <p className="text-sm text-gray-500">Latest tour updates</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
             <span className="text-sm text-[#15803D] font-medium">Coming Soon</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Game Utilities */}
+      <div className="bg-white p-6 rounded-xl shadow-sm mb-6">
+        <h2 className="text-lg font-bold mb-4">Game Utilities</h2>
+        <div className="flex flex-col gap-3">
+          {/* Club Distance Gapping Calculator */}
+          <button
+            disabled
+            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative opacity-75"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-[#15803D]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 9L12 3L21 9V21H3V9Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M9 21V12H15V21" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <span className="text-gray-900 font-medium">Club Distance Gapping Calculator</span>
+                <p className="text-sm text-gray-500">Calculate club distance gaps and suggest adjustments.</p>
+              </div>
+            </div>
+            <span className="text-sm text-[#15803D] font-medium">Coming Soon</span>
+          </button>
+          {/* Layup Distance Optimizer */}
+          <button
+            disabled
+            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative opacity-75"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-[#15803D]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <span className="text-gray-900 font-medium">Layup Distance Optimizer</span>
+                <p className="text-sm text-gray-500">Recommend layup distances based on hazards and your data.</p>
+              </div>
+            </div>
+            <span className="text-sm text-[#15803D] font-medium">Coming Soon</span>
+          </button>
+        </div>
+      </div>
+
+      {/* AI-Powered Apps */}
+      <div className="bg-white p-6 rounded-xl shadow-sm">
+        <h2 className="text-lg font-bold mb-4">AI-Powered Apps</h2>
+        <div className="flex flex-col gap-3">
+          {/* Ask Fairway AI */}
+          <button
+            onClick={() => setShowChat(true)}
+            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-[#15803D]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 8V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <span className="text-gray-900 font-medium">Ask Fairway AI</span>
+                <p className="text-sm text-gray-500">Chat for personalized golf advice.</p>
+              </div>
+            </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
               <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </div>
-        </button>
+          </button>
+          {/* Fairway Insights (Analyze Game, rebranded) */}
+          <button
+            onClick={() => setShowInsights(true)}
+            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-[#15803D]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 9L12 3L21 9V21H3V9Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M9 21V12H15V21" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className="text-left">
+                <span className="text-gray-900 font-medium">Fairway Facts Insights</span>
+                <p className="text-sm text-gray-500">2-3 key round insights & player persona matching.</p>
+              </div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
+              <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Slide-up Modals */}
@@ -747,27 +773,12 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
             onClick={e => e.stopPropagation()}
           >
             <div className="p-6 pt-8 sm:p-8">
-              <h2 className="text-xl font-semibold mb-4">AI-Powered Insights</h2>
+              <h2 className="text-xl font-semibold mb-4">Fairway Facts Insights</h2>
               <PerformanceAnalysis allRounds={allRounds} />
             </div>
           </div>
         </div>
       )}
-      {showSimulate && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-backdrop bg-black/30" onClick={() => setShowSimulate(false)}>
-          <div
-            className={`modal-content bg-white rounded-t-2xl sm:rounded-xl shadow-xl w-full ${isClosing ? 'closing' : ''}`}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="p-6 pt-8 sm:p-8">
-              <SimulateRoundModal onClose={() => {
-                setIsClosing(true);
-                setTimeout(() => setShowSimulate(false), 300);
-              }} />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

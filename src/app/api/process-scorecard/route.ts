@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     // Initialize the model
     console.log('Initializing Gemini model...');
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     console.log('Model initialized successfully');
 
     // Create a timeout promise
@@ -77,7 +77,10 @@ export async function POST(request: Request) {
            This is typically below the score row
            These numbers are usually smaller than the score numbers
    - Fairway Hit: Look for checkmarks (✓) or marks in the "F" row for fairways
-   - Green in Regulation: Look for checkmarks (✓) or marks in the "GIR" row
+   - Green in Regulation: Calculate for each hole using this formula:
+           - A GIR is achieved when (Score - Putts) <= 2
+           - This means the player reached the green with enough strokes left for two putts
+           - Set the corresponding GIR value to true if this condition is met
 
 IMPORTANT SCORING INSTRUCTIONS:
 - DO NOT read from the "Par" row - this shows the hole's par, not the player's score
