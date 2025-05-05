@@ -216,22 +216,7 @@ function AIPoweredChatBox({ allRounds }: { allRounds: GolfRound[] }) {
   );
 }
 
-// --- Simulate Round Modal Placeholder ---
-function SimulateRoundModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-xl w-full sm:w-[400px] max-w-full p-0 sm:p-6 animate-slideup relative">
-      <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={onClose} aria-label="Close">
-        <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 6L18 18M6 18L18 6"/></svg>
-      </button>
-      <div className="mb-4">
-        <h2 className="text-xl font-bold mb-3">Simulate a Round</h2>
-        <p className="text-gray-600 text-sm">(Coming soon) Use your stats to simulate a round of golf and see projected outcomes!</p>
-      </div>
-      {/* Simulation UI will go here */}
-      <div className="text-center text-gray-400 py-8">Simulation feature coming soon.</div>
-    </div>
-  );
-}
+
 
 export default function Dashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -608,7 +593,7 @@ export default function Dashboard() {
 function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
   const [showChat, setShowChat] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [isClosing] = useState(false);
   return (
     <>
       {/* Course Hub */}
