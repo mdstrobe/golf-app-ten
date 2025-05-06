@@ -1,6 +1,5 @@
 "use client";
 
-import { Metadata } from 'next';
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
@@ -42,10 +41,6 @@ interface ChatMessage {
   role: 'user' | 'ai';
   text: string;
 }
-
-export const metadata: Metadata = {
-    title: 'Dashboard',
-  };
 
 const PerformanceAnalysis: React.FC<PerformanceAnalysisProps> = ({ allRounds }) => {
   const [analysis, setAnalysis] = useState<string>('');
