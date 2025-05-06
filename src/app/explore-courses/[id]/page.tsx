@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter} from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/supabase";
 
@@ -45,7 +45,7 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
         .eq("course_id", id);
       if (teeData) {
         setTeeBoxes(
-          teeData.map((tb: any) => ({
+          teeData.map((tb: any | string) => ({
             ...tb,
             pars: [...(tb.front_nine_par || []), ...(tb.back_nine_par || [])],
             yardages: [...(tb.front_nine_distance || []), ...(tb.back_nine_distance || [])],

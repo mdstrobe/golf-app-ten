@@ -24,7 +24,6 @@ export default function ExploreCourses() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<'name' | 'city' | 'state'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const router = useRouter();
 
   useEffect(() => {
     const fetchCourses = async () => {
