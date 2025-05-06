@@ -618,6 +618,7 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
   const [isClosing] = useState(false);
   const aiLocked = allRounds.length < 5;
   const roundsNeeded = Math.max(0, 5 - allRounds.length);
+  const router = useRouter();
   function pluralize(n: number, singular: string, plural: string) {
     return n === 1 ? singular : plural;
   }
@@ -630,7 +631,7 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
           {/* Explore Courses */}
           <button
             className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
-            onClick={() => alert('Course Explorer coming soon!')}
+            onClick={() => router.push('/explore-courses')}
           >
             <div className="flex items-center gap-3">
               <div className="text-[#15803D]">
