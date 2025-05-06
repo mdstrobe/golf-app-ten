@@ -536,7 +536,7 @@ export default function Dashboard() {
         {/* Performance Stats */}
         {isLoading ? (
           <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-      <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
+            <h2 className="text-xl font-bold mb-6">Recent Performance</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-6 last:border-0">
@@ -551,27 +551,49 @@ export default function Dashboard() {
         ) : (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-lg font-bold mb-6">Recent Performance</h2>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="flex flex-wrap gap-2 w-full justify-between">
+            <div className="flex flex-col gap-2 sm:gap-0">
+              {/* Mobile: 2 rows, Desktop: 1 row */}
+              <div className="flex flex-wrap w-full justify-between sm:justify-between">
+                {/* Rounds Played */}
+                <div className="flex flex-col items-center flex-1 min-w-[70px]">
+                  <span className="text-xs text-gray-500 mb-0.5">Rounds Played</span>
+                  <span className="text-xl font-bold text-gray-900">{golfRounds.length}</span>
+                </div>
                 {/* HCP */}
                 <div className="flex flex-col items-center flex-1 min-w-[70px]">
                   <span className="text-xs text-gray-500 mb-0.5">Current HCP</span>
                   <span className="text-xl font-bold text-gray-900">{stats.currentHcp || "0.0"}</span>
                   <span className={`text-xs flex items-center gap-1 ${parseFloat(stats.hcpChange) > 0 ? 'text-red-500' : 'text-green-600'}`}>{stats.hcpChange}</span>
                 </div>
-                {/* Avg Score */}
+                {/* Only show the next three stats on desktop in this row */}
+                <div className="hidden sm:flex flex-1 flex-col items-center min-w-[70px]">
+                  <span className="text-xs text-gray-500 mb-0.5">Avg. Score</span>
+                  <span className="text-xl font-bold text-gray-900">{stats.avgScore || "0"}</span>
+                  <span className={`text-xs flex items-center gap-1 ${parseFloat(stats.scoreChange) > 0 ? 'text-red-500' : 'text-green-600'}`}>{stats.scoreChange}</span>
+                </div>
+                <div className="hidden sm:flex flex-1 flex-col items-center min-w-[70px]">
+                  <span className="text-xs text-gray-500 mb-0.5">GIR %</span>
+                  <span className="text-xl font-bold text-gray-900">{stats.girPercentage || "0%"}</span>
+                  <span className={`text-xs flex items-center gap-1 ${parseFloat(stats.girChange) > 0 ? 'text-green-600' : 'text-red-500'}`}>{stats.girChange}</span>
+                </div>
+                <div className="hidden sm:flex flex-1 flex-col items-center min-w-[70px]">
+                  <span className="text-xs text-gray-500 mb-0.5">Putts/Round</span>
+                  <span className="text-xl font-bold text-gray-900">{stats.puttsPerRound || "0.0"}</span>
+                  <span className={`text-xs flex items-center gap-1 ${parseFloat(stats.puttsChange) > 0 ? 'text-red-500' : 'text-green-600'}`}>{stats.puttsChange}</span>
+                </div>
+              </div>
+              {/* Mobile: second row for Avg Score, GIR, Putts */}
+              <div className="flex flex-wrap w-full justify-between sm:hidden mt-2">
                 <div className="flex flex-col items-center flex-1 min-w-[70px]">
                   <span className="text-xs text-gray-500 mb-0.5">Avg. Score</span>
                   <span className="text-xl font-bold text-gray-900">{stats.avgScore || "0"}</span>
                   <span className={`text-xs flex items-center gap-1 ${parseFloat(stats.scoreChange) > 0 ? 'text-red-500' : 'text-green-600'}`}>{stats.scoreChange}</span>
                 </div>
-                {/* GIR % */}
                 <div className="flex flex-col items-center flex-1 min-w-[70px]">
                   <span className="text-xs text-gray-500 mb-0.5">GIR %</span>
                   <span className="text-xl font-bold text-gray-900">{stats.girPercentage || "0%"}</span>
                   <span className={`text-xs flex items-center gap-1 ${parseFloat(stats.girChange) > 0 ? 'text-green-600' : 'text-red-500'}`}>{stats.girChange}</span>
                 </div>
-                {/* Putts */}
                 <div className="flex flex-col items-center flex-1 min-w-[70px]">
                   <span className="text-xs text-gray-500 mb-0.5">Putts/Round</span>
                   <span className="text-xl font-bold text-gray-900">{stats.puttsPerRound || "0.0"}</span>
@@ -594,6 +616,11 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
   const [showChat, setShowChat] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
   const [isClosing] = useState(false);
+  const aiLocked = allRounds.length < 5;
+  const roundsNeeded = Math.max(0, 5 - allRounds.length);
+  function pluralize(n: number, singular: string, plural: string) {
+    return n === 1 ? singular : plural;
+  }
   return (
     <>
       {/* Course Hub */}
@@ -689,13 +716,22 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
       </div>
 
       {/* AI-Powered Apps */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
+      <div className={`bg-white p-6 rounded-xl shadow-sm${aiLocked ? ' opacity-60 pointer-events-none' : ''}`}>
         <h2 className="text-lg font-bold mb-4">AI-Powered Apps</h2>
+        {aiLocked && (
+          <div className="text-sm text-gray-500 mb-4 flex items-center gap-2">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 17a2 2 0 002-2v-2a2 2 0 00-2-2 2 2 0 00-2 2v2a2 2 0 002 2zm6-2v-2a6 6 0 10-12 0v2a2 2 0 00-2 2v2a2 2 0 002 2h12a2 2 0 002-2v-2a2 2 0 00-2-2z"/></svg>
+            {roundsNeeded === 1
+              ? 'Unlock by submitting one more round to access AI features!'
+              : `Unlock by submitting ${roundsNeeded} more ${pluralize(roundsNeeded, 'round', 'rounds')} to access AI features!`}
+          </div>
+        )}
         <div className="flex flex-col gap-3">
           {/* Ask Fairway AI */}
           <button
-            onClick={() => setShowChat(true)}
-            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
+            onClick={() => !aiLocked && setShowChat(true)}
+            disabled={aiLocked}
+            className={`flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative transition ${aiLocked ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-50'}`}
           >
             <div className="flex items-center gap-3">
               <div className="text-[#15803D]">
@@ -709,14 +745,19 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
                 <p className="text-sm text-gray-500">Chat for personalized golf advice.</p>
               </div>
             </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
-              <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            {aiLocked ? (
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 17a2 2 0 002-2v-2a2 2 0 00-2-2 2 2 0 00-2 2v2a2 2 0 002 2zm6-2v-2a6 6 0 10-12 0v2a2 2 0 00-2 2v2a2 2 0 002 2h12a2 2 0 002-2v-2a2 2 0 00-2-2z"/></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
+                <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
           </button>
-          {/* Fairway Insights (Analyze Game, rebranded) */}
+          {/* Fairway Facts Insights (Analyze Game, rebranded) */}
           <button
-            onClick={() => setShowInsights(true)}
-            className="flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative hover:bg-green-50 transition"
+            onClick={() => !aiLocked && setShowInsights(true)}
+            disabled={aiLocked}
+            className={`flex items-center justify-between w-full p-4 border-2 border-gray-100 rounded-lg group relative transition ${aiLocked ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-50'}`}
           >
             <div className="flex items-center gap-3">
               <div className="text-[#15803D]">
@@ -730,9 +771,13 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
                 <p className="text-sm text-gray-500">2-3 key round insights & player persona matching.</p>
               </div>
             </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
-              <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            {aiLocked ? (
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 17a2 2 0 002-2v-2a2 2 0 00-2-2 2 2 0 00-2 2v2a2 2 0 002 2zm6-2v-2a6 6 0 10-12 0v2a2 2 0 00-2 2v2a2 2 0 002 2h12a2 2 0 002-2v-2a2 2 0 00-2-2z"/></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
+                <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
           </button>
         </div>
       </div>
