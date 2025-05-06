@@ -51,9 +51,9 @@ export async function POST(request: Request) {
     // Create a timeout promise
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
-        console.log('Request timed out after 30 seconds');
-        reject(new Error('Request timed out'));
-      }, 30000);
+        console.log('Request timed out after 60 seconds');
+        reject(new Error('Request timed out - the image may be too large or complex. Try taking the photo from further away or in better lighting.'));
+      }, 60000); // Increased to 60 seconds
     });
 
     console.log('Sending request to Gemini AI...');
@@ -63,59 +63,38 @@ export async function POST(request: Request) {
         `You are a specialized golf scorecard analyzer. I will show you a golf scorecard image. Your task is to carefully extract the following information with high precision:
 
 1. Course Name:
-   - Look for the course logo or name at the top of the scorecard (e.g., "O'Neal Golf Management")
+   - Look for the course logo or name at the top of the scorecard
 
 2. Date:
    - Look for a date field, typically at the top
    - If not explicitly shown, return null
 
 3. For each hole (1-18), carefully analyze:
-   - Score: Find the HANDWRITTEN numbers in the player's score row (NOT the "Par" row)
-           This is typically where the player's name is written on the left
-           These are the actual strokes taken per hole
+   - Score: Find the HANDWRITTEN numbers in the player's score row
    - Putts: Find the HANDWRITTEN numbers in the "Putts" row
-           This is typically below the score row
-           These numbers are usually smaller than the score numbers
-   - Fairway Hit: Look for checkmarks (✓) or marks in the "F" row for fairways
-   - Green in Regulation: Calculate for each hole using this formula:
-           - A GIR is achieved when (Score - Putts) <= 2
-           - This means the player reached the green with enough strokes left for two putts
-           - Set the corresponding GIR value to true if this condition is met
-
-IMPORTANT SCORING INSTRUCTIONS:
-- DO NOT read from the "Par" row - this shows the hole's par, not the player's score
-- Look for the row with a player's name or where scores are handwritten
-- Scores are typically larger numbers (2-8 range typically)
-- Putts are typically smaller numbers (1-4 range typically)
-- The total score for 18 holes is usually between 70-120
-- Verify that the scores make sense (a score should always be >= putts for that hole)
-
-Example of what to look for:
-- Player's Score Row: Contains the actual strokes taken (handwritten)
-- Putts Row: Contains number of putts (handwritten)
-- Fairway/Green markers: Look for ✓, •, or similar marks in F/GIR rows
+   - Fairway Hit: Look for checkmarks (✓) or marks in the "F" row
+   - Green in Regulation: Calculate using (Score - Putts) <= 2
 
 Return the data in this exact JSON format:
 {
-"user_id": ..., 
-"date_played": "...", // current date would be pulled here
+"user_id": "", 
+"date_played": null,
 "submission_type": "scanned",
-"front_nine_scores": [..., ..., for all nine holes ],
-"back_nine_scores": [..., ..., for all nine holes ],
-"front_nine_putts": [..., ..., for all nine holes ],
-"back_nine_putts": [..., ..., for all nine holes ],
-"front_nine_fairways": [..., ..., for all nine holes ],
-"back_nine_fairways": [..., ..., for all nine holes ],
-"front_nine_gir": [..., ..., for all nine holes ],
-"back_nine_gir": [..., ..., for all nine holes ],
-"total_score": ...,
-"total_putts": ...,
-"total_fairways_hit": ...,
-"total_gir": ...,
+"front_nine_scores": [0,0,0,0,0,0,0,0,0],
+"back_nine_scores": [0,0,0,0,0,0,0,0,0],
+"front_nine_putts": [0,0,0,0,0,0,0,0,0],
+"back_nine_putts": [0,0,0,0,0,0,0,0,0],
+"front_nine_fairways": [false,false,false,false,false,false,false,false,false],
+"back_nine_fairways": [false,false,false,false,false,false,false,false,false],
+"front_nine_gir": [false,false,false,false,false,false,false,false,false],
+"back_nine_gir": [false,false,false,false,false,false,false,false,false],
+"total_score": 0,
+"total_putts": 0,
+"total_fairways_hit": 0,
+"total_gir": 0,
 "course_id": "",
 "tee_box_id": ""
-}
-No extra explanation is needed.`,
+}`,
         image
       ]),
       timeoutPromise

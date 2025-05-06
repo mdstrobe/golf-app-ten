@@ -198,82 +198,108 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
     }
   };
 
-  const handleFile = async (file: File) => {
-    console.log('Starting file processing...');
-    
+  async function handleFile(file: File) {
     if (!file.type.match(/image\/(jpeg|png|gif)/)) {
-      const error = 'Please upload a valid image file (JPEG, PNG, or GIF)';
-      console.error('File type error:', error);
-      onError(error);
+      onError('Please upload a valid image file (JPEG, PNG, or GIF)');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      const error = 'File size must be less than 10MB';
-      console.error('File size error:', error);
-      onError(error);
+      onError('File size must be less than 10MB');
       return;
     }
 
     setIsProcessing(true);
-    console.log('Converting image to base64...');
+    setShowReview(false);
+
+    // Start loading phrase interval
+    const intervalId = setInterval(() => {
+      setLoadingPhraseIdx(prev => (prev + 1) % golfPhrases.length);
+    }, 2000);
 
     try {
-      // Convert file to base64
+      // Create a new image element
+      const img = new Image();
       const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64Image = reader.result as string;
-        console.log('Image converted to base64. Length:', base64Image.length);
-        console.log('Base64 prefix:', base64Image.substring(0, 50) + '...');
-        
-        console.log('Sending request to process scorecard...');
-        
-        try {
-          // Call Gemini AI API to process the scorecard
-          const response = await fetch('/api/process-scorecard', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ image: base64Image }),
-          });
 
-          console.log('Response status:', response.status);
-          
-          if (!response.ok) {
-            throw new Error(`Failed to process scorecard: ${response.status} ${response.statusText}`);
+      reader.onload = () => {
+        img.onload = async () => {
+          try {
+            // Create canvas for compression
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Target width of 1200px while maintaining aspect ratio
+            const maxWidth = 1200;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxWidth) {
+              height = (maxWidth * height) / width;
+              width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress image
+            ctx?.drawImage(img, 0, 0, width, height);
+            
+            // Get compressed image data with higher compression
+            const compressedImage = canvas.toDataURL('image/jpeg', 0.6);
+
+            const response = await fetch('/api/process-scorecard', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ image: compressedImage }),
+            });
+
+            if (!response.ok) {
+              throw new Error(await response.text());
+            }
+
+            const data = await response.json();
+            if (data.error) {
+              throw new Error(data.error);
+            }
+
+            setProcessedData(data);
+            setShowReview(true);
+            setEditHoles(Array(18).fill(null).map((_, idx) => ({
+              hole: idx + 1,
+              score: idx < 9 ? data.front_nine_scores[idx] : data.back_nine_scores[idx - 9],
+              putts: idx < 9 ? data.front_nine_putts[idx] : data.back_nine_putts[idx - 9],
+              fairway: idx < 9 ? (data.front_nine_fairways[idx] ? 'hit' : 'miss') : (data.back_nine_fairways[idx - 9] ? 'hit' : 'miss'),
+              gir: idx < 9 ? data.front_nine_gir[idx] : data.back_nine_gir[idx - 9]
+            })));
+            onScorecardProcessed(data);
+          } catch (error) {
+            onError(error instanceof Error ? error.message : 'Failed to process scorecard');
+          } finally {
+            clearInterval(intervalId);
+            setIsProcessing(false);
           }
+        };
 
-          const data = await response.json();
-          console.log('Received processed data:', data);
-          
-          if (data.error) {
-            throw new Error(data.error);
-          }
-
-          setProcessedData(data);
-          setShowReview(true);
-          console.log('Processing completed successfully');
-        } catch (error) {
-          console.error('Error in API call:', error);
-          onError(error instanceof Error ? error.message : 'Failed to process scorecard');
-        } finally {
-          setIsProcessing(false);
-        }
+        img.src = reader.result as string;
       };
 
       reader.onerror = (error) => {
-        console.error('Error reading file:', error);
-        onError('Failed to read file');
+        onError('Error reading file');
+        console.error('FileReader error:', error);
+        clearInterval(intervalId);
         setIsProcessing(false);
       };
+
+      reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Error in file handling:', error);
-      onError('Failed to process scorecard. Please try again.');
+      onError(error instanceof Error ? error.message : 'Failed to process file');
+      clearInterval(intervalId);
       setIsProcessing(false);
     }
-  };
+  }
 
   const handleConfirm = () => {
     if (processedData) {
