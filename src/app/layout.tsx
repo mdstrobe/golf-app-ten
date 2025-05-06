@@ -10,7 +10,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Golf Performance App - Login",
+  title: {
+    template: '%s | Golf Performance App',
+    default: 'Golf Performance App'
+  },
   description: "Master Your Game with Data",
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Metadata } from 'next';import { useEffect, useState } from "react";
 import { supabase } from "@/supabase";
 import Link from "next/link";
 
@@ -23,6 +23,9 @@ export default function ExploreCourses() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<'name' | 'city' | 'state'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const metadata: Metadata = {
+    title: 'Explore Courses',
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {

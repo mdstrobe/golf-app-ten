@@ -1,5 +1,6 @@
 "use client";
 
+import { Metadata } from 'next';
 import { use, useEffect, useState } from "react";
 import { useRouter} from "next/navigation";
 import Link from "next/link";
@@ -39,6 +40,9 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
   const [selectedTee, setSelectedTee] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const metadata: Metadata = {
+    title: 'Course Details',
+  };
 
   useEffect(() => {
     const fetchCourse = async () => {
