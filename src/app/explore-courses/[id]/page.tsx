@@ -10,10 +10,20 @@ interface TeeBox {
   tee_name: string;
   rating: number;
   slope: number;
-  total_distance: number;
   pars: number[];
   yardages: number[];
 }
+
+type SupabaseTeeBox = {
+  id: string;
+  tee_name: string;
+  rating: number;
+  slope: number;
+  front_nine_par: number[];
+  back_nine_par: number[];
+  front_nine_distance: number[];
+  back_nine_distance: number[];
+};
 
 interface Course {
   id: string;
@@ -45,8 +55,11 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
         .eq("course_id", id);
       if (teeData) {
         setTeeBoxes(
-          teeData.map((tb: any | string) => ({
-            ...tb,
+          (teeData as SupabaseTeeBox[]).map((tb) => ({
+            id: tb.id,
+            tee_name: tb.tee_name,
+            rating: tb.rating,
+            slope: tb.slope,
             pars: [...(tb.front_nine_par || []), ...(tb.back_nine_par || [])],
             yardages: [...(tb.front_nine_distance || []), ...(tb.back_nine_distance || [])],
           }))
@@ -136,7 +149,7 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <div className="text-gray-500">Total Yardage</div>
-                    <div className="font-semibold text-gray-900">{selectedTeeBox.total_distance || 'N/A'} yds</div>
+                    <div className="font-semibold text-gray-900">{selectedTeeBox.yardages.reduce((a, b) => a + b, 0) || 'N/A'} yds</div>
                   </div>
                   <div>
                     <div className="text-gray-500">Slope</div>
