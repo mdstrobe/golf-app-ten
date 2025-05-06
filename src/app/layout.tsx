@@ -19,8 +19,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Replace GTM-XXXXXX with your actual GTM container ID
-  const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-XXXXXX';
+  const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-WC9RDZMQ';
   
   return (
     <html lang="en" className={inter.variable}>
