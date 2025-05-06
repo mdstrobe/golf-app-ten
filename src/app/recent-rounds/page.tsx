@@ -1,6 +1,5 @@
 "use client";
 
-import { Metadata } from 'next';
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { auth } from "@/firebase";
@@ -44,9 +43,6 @@ export default function RecentRounds() {
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const metadata: Metadata = {
-    title: 'Recent Rounds',
-  };
 
   const handleDeleteRound = async (roundId: string) => {
     try {

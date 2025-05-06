@@ -1,6 +1,5 @@
 "use client";
 
-import { Metadata } from 'next';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/firebase";
@@ -16,11 +15,6 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const metadata: Metadata = {
-    title: 'Auth',
-  };
-
-
 
   const handleAuth = async () => {
     try {
