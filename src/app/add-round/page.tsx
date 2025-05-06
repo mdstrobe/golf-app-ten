@@ -1,6 +1,5 @@
 'use client';
 
-import { Metadata } from 'next';
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from '@supabase/supabase-js';
@@ -64,10 +63,6 @@ interface ScorecardData {
   tee_box_name: string;
   date_played: string;
 }
-
-export const metadata: Metadata = {
-  title: 'Add Round',
-};
 
 export default function AddRound() {
   const [isManualEntry, setIsManualEntry] = useState(false);
