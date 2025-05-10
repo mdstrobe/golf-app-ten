@@ -183,7 +183,7 @@ export default function AddRound() {
     setRoundSummary(summary);
   }, [holes]);
 
-  const handleHoleChange = (holeIndex: number, field: keyof HoleData, value: string | 'left' | 'middle' | 'right' | null) => {
+  const handleHoleChange = (holeIndex: number, field: keyof HoleData, value: string | number | boolean | null) => {
     const newHoles = [...holes];
     newHoles[holeIndex] = {
       ...newHoles[holeIndex],
