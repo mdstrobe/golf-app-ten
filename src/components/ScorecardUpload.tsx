@@ -57,13 +57,13 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
   const [teeBoxes, setTeeBoxes] = useState<{ id: string; tee_name: string }[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [selectedTeeBox, setSelectedTeeBox] = useState<string>('');
+  const [selectedCourse] = useState<string>('');
+  const [selectedTeeBox] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>('');
-  const [searchCourse, setSearchCourse] = useState('');
-  const [filteredCourses, setFilteredCourses] = useState<{ id: string; name: string }[]>([]);
-  const [searchTeeBox, setSearchTeeBox] = useState('');
-  const [filteredTeeBoxes, setFilteredTeeBoxes] = useState<{ id: string; tee_name: string }[]>([]);
+  const [searchCourse] = useState('');
+  const [setFilteredCourses] = useState<{ id: string; name: string }[]>([]);
+  const [searchTeeBox] = useState('');
+  const [setFilteredTeeBoxes] = useState<{ id: string; tee_name: string }[]>([]);
   const [editHoles, setEditHoles] = useState<EditHole[]>([]);
   const [numberGrid, setNumberGrid] = useState<NumberGridState>({ isOpen: false, type: 'score', holeIndex: 0, position: { top: 0, left: 0 } });
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -141,22 +141,6 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
       setEditHoles(holes);
     }
   }, [processedData]);
-
-  // Filter courses/tee boxes for search
-  useEffect(() => {
-    setFilteredCourses(
-      searchCourse
-        ? courses.filter(c => c.name.toLowerCase().includes(searchCourse.toLowerCase()))
-        : courses
-    );
-  }, [searchCourse, courses]);
-  useEffect(() => {
-    setFilteredTeeBoxes(
-      searchTeeBox
-        ? teeBoxes.filter(t => t.tee_name.toLowerCase().includes(searchTeeBox.toLowerCase()))
-        : teeBoxes
-    );
-  }, [searchTeeBox, teeBoxes]);
 
   // Editable handlers
   const handleEditHole = (idx: number, field: keyof EditHole, value: string | number | boolean) => {

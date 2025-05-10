@@ -52,8 +52,8 @@ interface ScorecardData {
   back_nine_scores: number[];
   front_nine_putts: number[];
   back_nine_putts: number[];
-  front_nine_fairways: string[];
-  back_nine_fairways: string[];
+  front_nine_fairways: boolean[];
+  back_nine_fairways: boolean[];
   front_nine_gir: boolean[];
   back_nine_gir: boolean[];
   total_score: number;
@@ -201,22 +201,6 @@ export default function AddRound() {
     }
   };
 
-  const applyTwoPutts = () => {
-    const newHoles = holes.map(hole => ({
-      ...hole,
-      putts: "2"
-    }));
-    setHoles(newHoles);
-  };
-
-  const applyBogeyGolf = () => {
-    const newHoles = holes.map(hole => ({
-      ...hole,
-      score: "5" // Assuming par 4 for now, we can update this when course selection is implemented
-    }));
-    setHoles(newHoles);
-  };
-
   const calculateGIR = (score: string, putts: string): boolean | null => {
     if (!score || !putts) return null;
     const scoreNum = parseInt(score);
@@ -230,25 +214,8 @@ export default function AddRound() {
     setSelectedTeeBox(e.target.value);
   };
 
-  const handleInputClick = (
-    e: React.MouseEvent<HTMLInputElement>,
-    type: 'score' | 'putts',
-    holeIndex: number
-  ) => {
-    e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    setNumberGrid({
-      isOpen: true,
-      type,
-      holeIndex,
-      position: {
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + rect.width / 2
-      }
-    });
-  };
-
-  const handleScorecardProcessed = async (data: ScorecardData) => {
+  // Wrap the original async logic in a new function
+  const handleScorecardProcessedAsync = async (data: ScorecardData) => {
     try {
       // Find course and tee box IDs
       const { data: courseData, error: courseError } = await supabase
@@ -334,6 +301,10 @@ export default function AddRound() {
     }
   };
 
+  const handleScorecardProcessed = (data: ScorecardData) => {
+    handleScorecardProcessedAsync(data);
+  };
+
   const handleSaveRound = async () => {
     try {
       // Get current user
@@ -358,8 +329,8 @@ export default function AddRound() {
       const backNineScores = holes.slice(9).map(hole => parseInt(hole.score) || 0);
       const frontNinePutts = holes.slice(0, 9).map(hole => parseInt(hole.putts) || 0);
       const backNinePutts = holes.slice(9).map(hole => parseInt(hole.putts) || 0);
-      const frontNineFairways = holes.slice(0, 9).map(hole => hole.fairwayHit || '');
-      const backNineFairways = holes.slice(9).map(hole => hole.fairwayHit || '');
+      const frontNineFairways = holes.slice(0, 9).map(hole => hole.fairwayHit === 'middle');
+      const backNineFairways = holes.slice(9).map(hole => hole.fairwayHit === 'middle');
       const frontNineGir = holes.slice(0, 9).map(hole => calculateGIR(hole.score, hole.putts) || false);
       const backNineGir = holes.slice(9).map(hole => calculateGIR(hole.score, hole.putts) || false);
 

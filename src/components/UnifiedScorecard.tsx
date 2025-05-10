@@ -10,9 +10,14 @@ interface EditHole {
 
 interface UnifiedScorecardProps {
   editHoles: EditHole[];
-  onEditHole: (holeIdx: number, field: 'score' | 'putts' | 'fairway', value: any) => void;
+  onEditHole: (holeIdx: number, field: 'score' | 'putts' | 'fairway', value: string | number | null) => void;
   openNumberGrid: (type: 'score' | 'putts', holeIdx: number, e: React.MouseEvent) => void;
-  numberGrid: any;
+  numberGrid: {
+    isOpen: boolean;
+    type: 'score' | 'putts';
+    holeIndex: number;
+    position: { top: number; left: number };
+  };
   courseName: string;
   teeBoxName: string;
   date: string;
@@ -41,7 +46,6 @@ export default function UnifiedScorecard({
   editHoles,
   onEditHole,
   openNumberGrid,
-  numberGrid,
   courseName,
   teeBoxName,
   date,
@@ -75,7 +79,7 @@ export default function UnifiedScorecard({
         <div className="mb-6 w-full">
           <div className="font-semibold text-lg text-gray-900 mb-2">Front 9</div>
           <div className="grid grid-cols-9 gap-1 sm:gap-2 mb-1 w-full">
-            {front9.map((h, idx) => (
+            {front9.map((h) => (
               <div key={h.hole} className="flex flex-col items-center w-full">
                 <span className="text-xs text-gray-400">#{h.hole}</span>
               </div>
@@ -129,7 +133,7 @@ export default function UnifiedScorecard({
         <div className="mb-6 w-full">
           <div className="font-semibold text-lg text-gray-900 mb-2">Back 9</div>
           <div className="grid grid-cols-9 gap-1 sm:gap-2 mb-1 w-full">
-            {back9.map((h, idx) => (
+            {back9.map((h) => (
               <div key={h.hole} className="flex flex-col items-center w-full">
                 <span className="text-xs text-gray-400">#{h.hole}</span>
               </div>
