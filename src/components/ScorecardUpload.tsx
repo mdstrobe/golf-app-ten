@@ -139,7 +139,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   }, [processedData]);
 
   // Editable handlers
-  const handleEditHole = (idx: number, field: keyof EditHole, value: string | number | boolean) => {
+  const handleEditHole = (idx: number, field: keyof EditHole, value: string | number | boolean | null) => {
     setEditHoles(prev => prev.map((h, i) => i === idx ? { ...h, [field]: value } : h));
   };
   const openNumberGrid = (type: 'score' | 'putts', idx: number, e: React.MouseEvent) => {
@@ -393,7 +393,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
         <h3 className="text-xl font-bold text-green-700 mt-6 mb-2">Results</h3>
         <UnifiedScorecard
           editHoles={editHoles}
-          onEditHole={(idx, field, value) => handleEditHole(idx, field, value)}
+          onEditHole={(idx, field, value) => handleEditHole(idx, field, value as string | number | boolean | null)}
           openNumberGrid={openNumberGrid}
           numberGrid={numberGrid}
           courseName={courseName}
