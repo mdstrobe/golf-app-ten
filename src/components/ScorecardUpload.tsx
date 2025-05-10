@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import ScoreNumberGrid from './ScoreNumberGrid';
+import UnifiedScorecard from './UnifiedScorecard';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -15,8 +16,8 @@ interface ScorecardData {
   back_nine_scores: number[];
   front_nine_putts: number[];
   back_nine_putts: number[];
-  front_nine_fairways: string[];
-  back_nine_fairways: string[];
+  front_nine_fairways: boolean[];
+  back_nine_fairways: boolean[];
   front_nine_gir: boolean[];
   back_nine_gir: boolean[];
   total_score: number;
@@ -65,6 +66,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   const [filteredTeeBoxes, setFilteredTeeBoxes] = useState<{ id: string; tee_name: string }[]>([]);
   const [editHoles, setEditHoles] = useState<EditHole[]>([]);
   const [numberGrid, setNumberGrid] = useState<NumberGridState>({ isOpen: false, type: 'score', holeIndex: 0, position: { top: 0, left: 0 } });
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
   // Calculate GIR based on score and putts
   const calculateGIR = (score: number | string, putts: number | string): boolean => {
@@ -132,7 +134,7 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
           hole: i + 1,
           score: isBackNine ? processedData.back_nine_scores[idx] : processedData.front_nine_scores[idx],
           putts: isBackNine ? processedData.back_nine_putts[idx] : processedData.front_nine_putts[idx],
-          fairway: (isBackNine ? processedData.back_nine_fairways[idx] : processedData.front_nine_fairways[idx]) || '',
+          fairway: (isBackNine ? processedData.back_nine_fairways[idx] : processedData.front_nine_fairways[idx]) ? 'hit' : 'miss',
           gir: false // GIR will be calculated dynamically
         });
       }
@@ -211,6 +213,13 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
 
     setIsProcessing(true);
     setShowReview(false);
+
+    // Create a preview of the image
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setUploadedImage(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
 
     // Start loading phrase interval
     const intervalId = setInterval(() => {
@@ -308,8 +317,8 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
       const back_nine_scores = editHoles.slice(9).map(h => Number(h.score) || 0);
       const front_nine_putts = editHoles.slice(0, 9).map(h => Number(h.putts) || 0);
       const back_nine_putts = editHoles.slice(9).map(h => Number(h.putts) || 0);
-      const front_nine_fairways = editHoles.slice(0, 9).map(h => h.fairway || '');
-      const back_nine_fairways = editHoles.slice(9).map(h => h.fairway || '');
+      const front_nine_fairways = editHoles.slice(0, 9).map(h => h.fairway === 'hit');
+      const back_nine_fairways = editHoles.slice(9).map(h => h.fairway === 'hit');
       const front_nine_gir = editHoles.slice(0, 9).map(h => calculateGIR(h.score, h.putts));
       const back_nine_gir = editHoles.slice(9).map(h => calculateGIR(h.score, h.putts));
       const updatedData = {
@@ -325,10 +334,15 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
         back_nine_fairways,
         front_nine_gir,
         back_nine_gir,
+        total_score: front_nine_scores.reduce((a, b) => a + b, 0) + back_nine_scores.reduce((a, b) => a + b, 0),
+        total_putts: front_nine_putts.reduce((a, b) => a + b, 0) + back_nine_putts.reduce((a, b) => a + b, 0),
+        total_fairways_hit: front_nine_fairways.filter(Boolean).length + back_nine_fairways.filter(Boolean).length,
+        total_gir: front_nine_gir.filter(Boolean).length + back_nine_gir.filter(Boolean).length,
       };
       onScorecardProcessed(updatedData);
       setShowReview(false);
       setProcessedData(null);
+      setUploadedImage(null);
     }
   };
 
@@ -356,210 +370,128 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
     };
   }, [isProcessing, golfPhrases.length]);
 
+  // Set uploaded image when file is selected
+  useEffect(() => {
+    if (!uploadedImage && fileInputRef.current && fileInputRef.current.files?.[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => setUploadedImage(e.target?.result as string);
+      reader.readAsDataURL(fileInputRef.current.files[0]);
+    }
+  }, [uploadedImage]);
+
   if (showReview && processedData) {
+    // Defensive course lookup
+    const courseObj = courses.find(c => c.id === selectedCourse);
+    const courseName = processedData.course_name || courseObj?.name || '';
+    const teeBoxObj = teeBoxes.find(t => t.id === selectedTeeBox);
+    const teeBoxName = processedData.tee_box_name || teeBoxObj?.tee_name || '';
+    // Fairways bar calculation
+    const fairwaysHit = editHoles.filter(h => h.fairway === 'hit').length;
+    const fairwaysPct = Math.round((fairwaysHit / 18) * 100);
+    // Calculate total score/putts
+    const totalScore = editHoles.reduce((a, h) => a + (Number(h.score) || 0), 0);
+    const totalPutts = editHoles.reduce((a, h) => a + (Number(h.putts) || 0), 0);
+    // Instructional message
+    const instructions = (
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded text-sm">
+        <b>Instructions:</b> Click a number to edit scores or putts. Click the green/gray circles to toggle fairway hit status. Make sure each row is correct before saving.
+      </div>
+    );
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Scorecard Data</h3>
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Course Details</h4>
-            {/* Searchable Course Input */}
-            {processedData.course_name ? (
-              <p className="text-sm text-gray-600">Course: {processedData.course_name}</p>
-            ) : (
-              <div className="mb-2 relative">
-                <label className="text-sm text-gray-600">Select Course:</label>
-                <input
-                  type="text"
-                  className="block w-full mt-1 border rounded p-2"
-                  placeholder="Type Course Name"
-                  value={searchCourse}
-                  onChange={e => setSearchCourse(e.target.value)}
-                  onFocus={() => setFilteredCourses(courses)}
-                />
-                {searchCourse && filteredCourses.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
-                    {filteredCourses.map(course => (
-                      <div
-                        key={course.id}
-                        onClick={() => {
-                          setSelectedCourse(course.id);
-                          setSearchCourse(course.name);
-                          setFilteredCourses([]);
-                        }}
-                        className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                      >
-                        <div className="text-sm font-medium truncate">{course.name}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {/* Searchable Tee Box Input */}
-            {processedData.tee_box_name ? (
-              <p className="text-sm text-gray-600">Tee Box: {processedData.tee_box_name}</p>
-            ) : (
-              <div className="mb-2 relative">
-                <label className="text-sm text-gray-600">Select Tee Box:</label>
-                <input
-                  type="text"
-                  className="block w-full mt-1 border rounded p-2"
-                  placeholder="Type Tee Box Name"
-                  value={searchTeeBox}
-                  onChange={e => setSearchTeeBox(e.target.value)}
-                  onFocus={() => setFilteredTeeBoxes(teeBoxes)}
-                  disabled={!selectedCourse}
-                />
-                {searchTeeBox && filteredTeeBoxes.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
-                    {filteredTeeBoxes.map(tb => (
-                      <div
-                        key={tb.id}
-                        onClick={() => {
-                          setSelectedTeeBox(tb.id);
-                          setSearchTeeBox(tb.tee_name);
-                          setFilteredTeeBoxes([]);
-                        }}
-                        className="p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                      >
-                        <div className="text-sm font-medium truncate">{tb.tee_name}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {/* Styled Date Input */}
-            <div className="mb-2">
-              <label className="text-sm text-gray-600">Date:</label>
-              <input
-                type="date"
-                className="block w-full mt-1 border rounded p-2"
-                value={selectedDate}
-                onChange={e => setSelectedDate(e.target.value)}
-              />
+      <div className="bg-white rounded-xl shadow-sm p-6 w-full">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Scorecard Image</h3>
+        {instructions}
+        {uploadedImage && (
+          <div className="mb-2 flex flex-col items-start">
+            <img src={uploadedImage} alt="Scorecard" className="rounded-lg border w-full max-w-2xl mb-2" style={{objectFit:'contain'}} />
+            <div className="flex gap-4 text-sm">
+              <button onClick={() => { setShowReview(false); setProcessedData(null); setUploadedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="text-red-600 hover:underline">Remove Image</button>
+              <button onClick={() => { setShowReview(false); setProcessedData(null); }} className="text-blue-600 hover:underline">Reprocess Image</button>
             </div>
           </div>
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Round Summary</h4>
-            <p className="text-sm text-gray-600">Total Score: {editHoles.reduce((a, h) => a + (Number(h.score) || 0), 0)}</p>
-            <p className="text-sm text-gray-600">Total Putts: {editHoles.reduce((a, h) => a + (Number(h.putts) || 0), 0)}</p>
-            <p className="text-sm text-gray-600">Fairways Hit: {editHoles.filter(h => h.fairway === 'hit').length}/18</p>
-            <p className="text-sm text-gray-600">GIR: {editHoles.filter(h => calculateGIR(h.score, h.putts)).length}/18</p>
-          </div>
-        </div>
-        {/* Editable Hole-by-Hole Table */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Hole-by-Hole Results</h4>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-xs text-center border">
-              <thead>
-                <tr>
-                  <th className="border px-2 py-1">Hole</th>
-                  <th className="border px-2 py-1">Score</th>
-                  <th className="border px-2 py-1">Putts</th>
-                  <th className="border px-2 py-1">Fairway</th>
-                  <th className="border px-2 py-1">GIR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {editHoles.map((h, idx) => (
-                  <tr key={h.hole}>
-                    <td className="border px-2 py-1 font-semibold">{h.hole}</td>
-                    {/* Editable Score */}
-                    <td className="border px-2 py-1">
-                      <button
-                        className="w-12 h-8 border rounded bg-white hover:border-green-500 focus:outline-none"
-                        onClick={e => openNumberGrid('score', idx, e)}
-                        type="button"
-                      >
-                        {h.score || <span className="text-gray-400">--</span>}
-                      </button>
-                    </td>
-                    {/* Editable Putts */}
-                    <td className="border px-2 py-1">
-                      <button
-                        className="w-12 h-8 border rounded bg-white hover:border-green-500 focus:outline-none"
-                        onClick={e => openNumberGrid('putts', idx, e)}
-                        type="button"
-                      >
-                        {h.putts || <span className="text-gray-400">--</span>}
-                      </button>
-                    </td>
-                    {/* Editable Fairway */}
-                    <td className="border px-2 py-1">
-                      <select
-                        className="w-20 border rounded p-1"
-                        value={h.fairway || ''}
-                        onChange={e => handleEditHole(idx, 'fairway', e.target.value)}
-                      >
-                        <option value="">--</option>
-                        <option value="hit">Hit</option>
-                        <option value="miss">Miss</option>
-                        <option value="left">Left</option>
-                        <option value="right">Right</option>
-                      </select>
-                    </td>
-                    {/* GIR (auto-calculated) */}
-                    <td className="border px-2 py-1">
-                      <div className="h-7 flex items-center justify-center">
-                        <span className={`text-base ${calculateGIR(h.score, h.putts) ? 'text-[#15803D]' : 'text-gray-300'}`}>
-                          ●
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={handleRetry}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Try Again
-          </button>
-          <button
-            onClick={handleConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
-            disabled={(!processedData.course_name && !selectedCourse) || (!processedData.tee_box_name && !selectedTeeBox)}
-          >
-            Confirm & Save
-          </button>
-        </div>
-        {/* ScoreNumberGrid for editing */}
-        <ScoreNumberGrid
-          isOpen={numberGrid.isOpen}
-          onClose={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
-          onSelect={handleNumberGridSelect}
-          par={4}
-          type={numberGrid.type as 'score' | 'putts'}
-          position={numberGrid.position}
-          holeNumber={numberGrid.holeIndex + 1}
-          onNextHole={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
+        )}
+        <h3 className="text-xl font-bold text-green-700 mt-6 mb-2">Results</h3>
+        <UnifiedScorecard
+          editHoles={editHoles}
+          onEditHole={(idx, field, value) => handleEditHole(idx, field, value)}
+          openNumberGrid={openNumberGrid}
+          numberGrid={numberGrid}
+          courseName={courseName}
+          teeBoxName={teeBoxName}
+          date={selectedDate}
+          totalScore={totalScore}
+          totalPutts={totalPutts}
+          fairwaysHit={fairwaysHit}
+          fairwaysPct={fairwaysPct}
+          onRetry={handleRetry}
+          onConfirm={handleConfirm}
+          confirmDisabled={(!courseName && !selectedCourse) || (!teeBoxName && !selectedTeeBox)}
+          ScoreNumberGrid={
+            <ScoreNumberGrid
+              isOpen={numberGrid.isOpen}
+              onClose={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
+              onSelect={handleNumberGridSelect}
+              par={4}
+              type={numberGrid.type as 'score' | 'putts'}
+              position={numberGrid.position}
+              holeNumber={numberGrid.holeIndex + 1}
+              onNextHole={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
+            />
+          }
         />
       </div>
     );
   }
 
-  return (
-    <div className="border-2 border-dashed border-gray-200 rounded-2xl p-12 max-w-lg mx-auto relative">
-      <div className="flex flex-col items-center">
-        {isProcessing ? (
+  // Loading UI
+  if (isProcessing) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div className="flex flex-col items-center bg-white rounded-xl shadow-sm p-8">
+          <div className="w-full mb-6">
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-green-500 rounded-full animate-pulse" style={{ width: '40%' }}></div>
+            </div>
+          </div>
           <div className="flex flex-col items-center">
-            <div className="relative w-20 h-20">
-              <div className="w-20 h-20 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="relative w-12 h-12 mb-4">
+              <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <svg className="w-8 h-8 text-green-500" viewBox="0 0 24 24" fill="none">
+                <svg className="w-6 h-6 text-green-500" viewBox="0 0 24 24" fill="none">
                   <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
             </div>
-            <p className="text-green-500 font-medium mt-4 mb-2 min-h-[1.5em]">{golfPhrases[loadingPhraseIdx]}</p>
-            <p className="text-gray-500 text-sm">This may take a few moments</p>
+            <p className="text-green-700 font-medium mt-2 mb-1 min-h-[1.5em]">Sending to AI model for analysis...</p>
+            <p className="text-xs text-gray-500 mb-2">Using gpt-4-vision-mini</p>
+            <p className="text-gray-500 text-xs">{golfPhrases[loadingPhraseIdx]}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main upload UI
+  return (
+    <div className="border-2 border-dashed border-gray-200 rounded-2xl p-12 max-w-lg mx-auto relative">
+      <div className="flex flex-col items-center">
+        {uploadedImage ? (
+          <div className="w-full">
+            <img src={uploadedImage} alt="Scorecard Preview" className="rounded-lg border w-full max-w-2xl mb-4" style={{objectFit:'contain'}} />
+            <div className="flex gap-4 justify-center mb-4">
+              <button 
+                onClick={() => { setUploadedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} 
+                className="text-red-600 hover:underline"
+              >
+                Remove Image
+              </button>
+              <button 
+                onClick={() => fileInputRef.current?.click()} 
+                className="text-blue-600 hover:underline"
+              >
+                Change Image
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -576,15 +508,6 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
               <path d="M14 10L16 8L20 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <circle cx="9" cy="8" r="2" stroke="currentColor" strokeWidth="2"/>
             </svg>
-            
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileInput}
-              accept="image/jpeg,image/png,image/gif"
-              className="hidden"
-            />
-            
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
@@ -594,13 +517,18 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
             >
               Upload a file
             </button>
-            
             <p className="text-gray-500 mb-1">or drag and drop</p>
             <p className="text-gray-400 text-sm">PNG, JPG, GIF up to 10MB</p>
           </>
         )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileInput}
+          accept="image/jpeg,image/png,image/gif"
+          className="hidden"
+        />
       </div>
-      
       <div
         className={`absolute inset-0 ${isDragging ? 'bg-green-50 bg-opacity-50' : ''} pointer-events-none`}
         onDragOver={handleDragOver}

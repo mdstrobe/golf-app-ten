@@ -114,6 +114,22 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
         ) : (
           <>
             <div className="flex flex-col items-center mb-6">
+              {/* Golf Course Icon */}
+              <div className="mb-2">
+                <svg width="48" height="48" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="100" cy="100" r="90" fill="#15803D" />
+                  <circle cx="100" cy="85" r="35" fill="white" />
+                  <circle cx="100" cy="85" r="35" fill="url(#golfBallPattern)" />
+                  <defs>
+                    <pattern id="golfBallPattern" patternUnits="userSpaceOnUse" width="10" height="10">
+                      <circle cx="5" cy="5" r="1" fill="#E5E7EB" opacity="0.3" />
+                      <line x1="0" y1="5" x2="10" y2="5" stroke="#E5E7EB" strokeWidth="0.5" opacity="0.2" />
+                      <line x1="5" y1="0" x2="5" y2="10" stroke="#E5E7EB" strokeWidth="0.5" opacity="0.2" />
+                    </pattern>
+                  </defs>
+                  <path d="M100 120 L100 150" stroke="#A37B43" strokeWidth="10" strokeLinecap="round" />
+                </svg>
+              </div>
               <h1 className="text-2xl font-bold text-center mb-2">{course.name}</h1>
               <div className="text-gray-500 text-sm mb-4">{course.city}, {course.state}</div>
               <div className="flex gap-3 mb-4">
@@ -144,58 +160,96 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
             </div>
             {/* Course Details Card */}
             {selectedTeeBox && (
-              <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                <h2 className="text-lg font-bold mb-4">Course Details</h2>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-gray-500">Total Yardage</div>
-                    <div className="font-semibold text-gray-900">{selectedTeeBox.yardages.reduce((a, b) => a + b, 0) || 'N/A'} yds</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500">Slope</div>
-                    <div className="font-semibold text-gray-900">{selectedTeeBox.slope || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500">Rating</div>
-                    <div className="font-semibold text-gray-900">{selectedTeeBox.rating || 'N/A'}</div>
+              <>
+                <h2 className="text-lg font-bold mb-2">Course Details</h2>
+                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-500">Total Yardage</div>
+                      <div className="font-semibold text-gray-900">{selectedTeeBox.yardages.reduce((a, b) => a + b, 0) || 'N/A'} yds</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Slope</div>
+                      <div className="font-semibold text-gray-900">{selectedTeeBox.slope || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Rating</div>
+                      <div className="font-semibold text-gray-900">{selectedTeeBox.rating || 'N/A'}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>
             )}
-            {/* Hole Details Table */}
+            {/* Hole Details Tables - Front and Back Nine */}
             {selectedTeeBox && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-bold mb-4">Hole Details</h2>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="py-2 px-2 text-left font-semibold text-gray-700">Hole</th>
-                        {selectedTeeBox.yardages.map((_, i) => (
-                          <th key={i} className="py-2 px-2 text-center font-semibold text-gray-700">{i + 1}</th>
-                        ))}
-                        <th className="py-2 px-2 text-center font-semibold text-gray-700">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="py-2 px-2 font-medium text-gray-600">Par</td>
-                        {selectedTeeBox.pars.map((par, i) => (
-                          <td key={i} className="py-2 px-2 text-center">{par}</td>
-                        ))}
-                        <td className="py-2 px-2 text-center font-semibold">{selectedTeeBox.pars.reduce((a, b) => a + b, 0)}</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-2 font-medium text-gray-600">Yardage</td>
-                        {selectedTeeBox.yardages.map((y, i) => (
-                          <td key={i} className="py-2 px-2 text-center">{y}</td>
-                        ))}
-                        <td className="py-2 px-2 text-center font-semibold">{selectedTeeBox.yardages.reduce((a, b) => a + b, 0)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+              <>
+                {/* Front Nine */}
+                <h2 className="text-lg font-bold mb-2">Front Nine</h2>
+                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-2 text-left font-semibold text-gray-700">Hole</th>
+                          {[...Array(9)].map((_, i) => (
+                            <th key={i} className="py-2 px-2 text-center font-semibold text-gray-700">{i + 1}</th>
+                          ))}
+                          <th className="py-2 px-2 text-center font-semibold text-gray-700">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="py-2 px-2 font-medium text-gray-600">Par</td>
+                          {selectedTeeBox.pars.slice(0, 9).map((par, i) => (
+                            <td key={i} className="py-2 px-2 text-center">{par}</td>
+                          ))}
+                          <td className="py-2 px-2 text-center font-semibold">{selectedTeeBox.pars.slice(0, 9).reduce((a, b) => a + b, 0)}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-2 font-medium text-gray-600">Yardage</td>
+                          {selectedTeeBox.yardages.slice(0, 9).map((y, i) => (
+                            <td key={i} className="py-2 px-2 text-center">{y}</td>
+                          ))}
+                          <td className="py-2 px-2 text-center font-semibold">{selectedTeeBox.yardages.slice(0, 9).reduce((a, b) => a + b, 0)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+                {/* Back Nine */}
+                <h2 className="text-lg font-bold mb-2">Back Nine</h2>
+                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-2 text-left font-semibold text-gray-700">Hole</th>
+                          {[...Array(9)].map((_, i) => (
+                            <th key={i} className="py-2 px-2 text-center font-semibold text-gray-700">{i + 10}</th>
+                          ))}
+                          <th className="py-2 px-2 text-center font-semibold text-gray-700">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="py-2 px-2 font-medium text-gray-600">Par</td>
+                          {selectedTeeBox.pars.slice(9, 18).map((par, i) => (
+                            <td key={i} className="py-2 px-2 text-center">{par}</td>
+                          ))}
+                          <td className="py-2 px-2 text-center font-semibold">{selectedTeeBox.pars.slice(9, 18).reduce((a, b) => a + b, 0)}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-2 font-medium text-gray-600">Yardage</td>
+                          {selectedTeeBox.yardages.slice(9, 18).map((y, i) => (
+                            <td key={i} className="py-2 px-2 text-center">{y}</td>
+                          ))}
+                          <td className="py-2 px-2 text-center font-semibold">{selectedTeeBox.yardages.slice(9, 18).reduce((a, b) => a + b, 0)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
             )}
           </>
         )}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/supabase";
 import Link from "next/link";
+import SearchBar from "@/components/SearchBar"; // Adjust the import path as needed
+import SortPill from '../../components/SortPill';
 
 interface Course {
   id: string;
@@ -11,6 +13,7 @@ interface Course {
   state: string;
 }
 
+// Configure the sort fields
 const SORT_FIELDS = [
   { key: 'name', label: 'Course Name' },
   { key: 'city', label: 'City' },
@@ -58,65 +61,52 @@ export default function ExploreCourses() {
   return (
     <main className="min-h-screen bg-gray-50 py-4">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-              {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/dashboard" 
-              className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <svg 
-                width="20" 
-                height="20" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
-                className="stroke-current"
+        {/* Header */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/dashboard" 
+                className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <path 
-                  d="M15 18L9 12L15 6" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>Back</span>
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Total Courses: {courses.length}</span>
+                <svg 
+                  width="20" 
+                  height="20" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="stroke-current"
+                >
+                  <path 
+                    d="M15 18L9 12L15 6" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>Back</span>
+              </Link>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Total Courses: {courses.length}</span>
+            </div>
           </div>
         </div>
-      </div>
         {/* Search and Sort Pills */}
-        <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
-          <input
-            type="text"
-            className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#15803D] focus:border-transparent"
-            placeholder="Search by course name, city, or state..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <div className="flex gap-2 mt-2 sm:mt-0">
+        <div className="w-full flex flex-col items-center gap-2 mb-4">
+          <div className="w-full max-w-md">
+            <SearchBar search={search} setSearch={setSearch} />
+          </div>
+          <div className="w-full max-w-md flex gap-2 justify-center">
             {SORT_FIELDS.map(field => (
-              <button
+              <SortPill
                 key={field.key}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1 ${sortBy === field.key ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'}`}
+                label={field.label}
+                active={sortBy === field.key}
+                direction={sortBy === field.key ? sortOrder : undefined}
                 onClick={() => setSortBy(field.key as 'name' | 'city' | 'state')}
-                type="button"
-              >
-                {field.label}
-                {sortBy === field.key && (
-                  <span onClick={e => { e.stopPropagation(); setSortOrder(s => s === 'asc' ? 'desc' : 'asc'); }} className="cursor-pointer">
-                    {sortOrder === 'asc' ? (
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 15l7-7 7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    ) : (
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    )}
-                  </span>
-                )}
-              </button>
+                onToggleDirection={dir => setSortOrder(dir)}
+              />
             ))}
           </div>
         </div>
@@ -151,4 +141,4 @@ export default function ExploreCourses() {
       </div>
     </main>
   );
-} 
+}

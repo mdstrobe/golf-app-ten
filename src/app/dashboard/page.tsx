@@ -642,7 +642,7 @@ function AIDashboardInteractives({ allRounds }: { allRounds: GolfRound[] }) {
               </div>
               <div className="text-left">
                 <span className="text-gray-900 font-medium">Explore Courses</span>
-                <p className="text-sm text-gray-500">Browse/select courses for round entry or planning.</p>
+                <p className="text-sm text-gray-500">Browse courses for round entry or planning.</p>
               </div>
             </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">

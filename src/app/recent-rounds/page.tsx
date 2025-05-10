@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { auth } from "@/firebase";
 import Link from 'next/link';
+import SortPill from '../../components/SortPill';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -322,14 +323,6 @@ export default function RecentRounds() {
           <div className="flex gap-2">
             <button
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                selectedYear === '' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-              }`}
-              onClick={() => { setSelectedYear(''); triggerHaptic(); }}
-            >
-              All Time
-            </button>
-            <button
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
                 selectedYear === 'current' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
               }`}
               onClick={() => { setSelectedYear('current'); triggerHaptic(); }}
@@ -348,29 +341,20 @@ export default function RecentRounds() {
 
           {/* Sort options */}
           <div className="flex gap-2 ml-auto">
-            <button
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                sortBy === 'date' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-              }`}
+            <SortPill
+              label="Date"
+              active={sortBy === 'date'}
+              direction={sortBy === 'date' ? sortOrder : undefined}
               onClick={() => { setSortBy('date'); triggerHaptic(); }}
-            >
-              Date
-            </button>
-            <button
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                sortBy === 'score' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-              }`}
+              onToggleDirection={dir => { setSortOrder(dir); triggerHaptic(); }}
+            />
+            <SortPill
+              label="Score"
+              active={sortBy === 'score'}
+              direction={sortBy === 'score' ? sortOrder : undefined}
               onClick={() => { setSortBy('score'); triggerHaptic(); }}
-            >
-              Score
-            </button>
-            <button
-              className="px-3 py-1.5 rounded-full text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 transition"
-              onClick={() => { setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc'); triggerHaptic(); }}
-              aria-label="Toggle sort order"
-            >
-              {sortOrder === 'asc' ? '↑' : '↓'}
-            </button>
+              onToggleDirection={dir => { setSortOrder(dir); triggerHaptic(); }}
+            />
           </div>
         </div>
       </div>
@@ -394,7 +378,7 @@ export default function RecentRounds() {
             <div key={year} className="mb-8">
               {Object.entries(groupedRounds[year]).map(([month, monthRounds]) => (
                 <div key={`${year}-${month}`} className="mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">{`${month} ${year} rounds`}</h2>
+                  <h2 className="text-md font-semibold text-gray-900 mb-4">{`${month} ${year} rounds`}</h2>
                   <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
                     {monthRounds.map((round) => (
                       <div key={round.id} className="flex items-center justify-between p-4 hover:bg-green-50 transition-colors">

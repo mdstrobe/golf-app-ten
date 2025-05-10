@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import ScoreNumberGrid from '@/components/ScoreNumberGrid';
 import { auth } from "@/firebase";
 import ScorecardUpload from '@/components/ScorecardUpload';
+import UnifiedScorecard from '@/components/UnifiedScorecard';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -604,454 +605,59 @@ export default function AddRound() {
                   </div>
                 </div>
 
-                {/* Scorecard section */}
-                <div className="mt-8">
-                  <div className="space-y-4">
-                    <div>
-                      <div className="mb-2">
-                        <h3 className="text-base font-medium text-gray-900">Front Nine</h3>
-                      </div>
-                      <div className="overflow-x-auto -mx-4 px-4">
-                        <table className="min-w-full">
-                          <thead>
-                            <tr>
-                              <th className="w-16 py-1.5 px-1 text-left text-xs font-semibold text-gray-600 border-b border-gray-200">
-                                Stats
-                              </th>
-                              {[...Array(9)].map((_, i) => (
-                                <th key={i} className="w-11 py-1 px-1 text-center border-b border-gray-200">
-                                  <div className="space-y-1">
-                                    <div className="bg-[#15803D] rounded-t-sm p-1">
-                                      <div className="text-xs font-bold text-white">{i + 1}</div>
-                                    </div>
-                                    <div className="text-[10px] font-medium text-gray-500">
-                                      Par {holes[i]?.par || '-'}
-                                    </div>
-                                  </div>
-                                </th>
-                              ))}
-                              <th className="w-12 py-1 px-1 text-center border-b border-gray-200">
-                                <div className="text-xs font-semibold text-gray-600">OUT</div>
-                                <div className="text-[10px] font-medium text-gray-500">
-                                  {selectedTeeBox ? 
-                                    teeBoxes.find(tb => tb.id === selectedTeeBox)?.front_nine_par?.reduce((a, b) => a + b, 0) 
-                                    : '-'}
-                                </div>
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td className="py-1 px-1 text-xs font-medium text-gray-600">Score</td>
-                              {[...Array(9)].map((_, i) => (
-                                <td key={i} className="p-0.5">
-                                  <input
-                                    type="text"
-                                    inputMode="none"
-                                    value={holes[i].score}
-                                    onClick={(e) => handleInputClick(e, 'score', i)}
-                                    readOnly
-                                    data-hole={i}
-                                    data-type="score"
-                                    className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] cursor-pointer"
-                                  />
-                                </td>
-                              ))}
-                              <td className="p-0.5 text-center font-semibold text-sm text-gray-900">
-                                {holes.slice(0, 9).reduce((sum, hole) => sum + (hole.score ? parseInt(hole.score) : 0), 0) || '-'}
-                              </td>
-                            </tr>
-                            <tr className="bg-gray-50/30">
-                              <td className="py-1 px-1 text-xs font-medium text-gray-600">Putts</td>
-                              {[...Array(9)].map((_, i) => (
-                                <td key={i} className="p-0.5">
-                                  <input
-                                    type="text"
-                                    inputMode="none"
-                                    value={holes[i].putts}
-                                    onClick={(e) => handleInputClick(e, 'putts', i)}
-                                    readOnly
-                                    data-hole={i}
-                                    data-type="putts"
-                                    className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] bg-white cursor-pointer"
-                                  />
-                                </td>
-                              ))}
-                              <td className="p-0.5 text-center font-semibold text-sm text-gray-900">
-                                {holes.slice(0, 9).reduce((sum, hole) => sum + (hole.putts ? parseInt(hole.putts) : 0), 0) || '-'}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="py-1 px-1 text-xs font-medium text-gray-600">Fairway</td>
-                              {[...Array(9)].map((_, i) => (
-                                <td key={i} className="p-0.5">
-                                  <div className="flex flex-col gap-0.5">
-                                    <button
-                                      type="button"
-                                      tabIndex={i + 37}
-                                      onClick={() => handleHoleChange(i, 'fairwayHit', 'left')}
-                                      className={`h-5 border rounded flex items-center justify-center transition-all ${
-                                        holes[i].fairwayHit === 'left'
-                                          ? 'bg-gray-100 text-gray-500 border-gray-300'
-                                          : 'border-gray-200 hover:border-[#15803D] hover:text-[#15803D]'
-                                      }`}
-                                    >
-                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M10 19L3 12L10 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                      </svg>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      tabIndex={i + 37}
-                                      onClick={() => handleHoleChange(i, 'fairwayHit', 'middle')}
-                                      className={`h-5 border rounded flex items-center justify-center transition-all ${
-                                        holes[i].fairwayHit === 'middle'
-                                          ? 'bg-[#15803D] text-white border-[#15803D]'
-                                          : 'border-gray-200 hover:border-[#15803D] hover:text-[#15803D]'
-                                      }`}
-                                    >
-                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 19L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                      </svg>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      tabIndex={i + 37}
-                                      onClick={() => handleHoleChange(i, 'fairwayHit', 'right')}
-                                      className={`h-5 border rounded flex items-center justify-center transition-all ${
-                                        holes[i].fairwayHit === 'right'
-                                          ? 'bg-gray-100 text-gray-500 border-gray-300'
-                                          : 'border-gray-200 hover:border-[#15803D] hover:text-[#15803D]'
-                                      }`}
-                                    >
-                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M14 5L21 12L14 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                      </svg>
-                                    </button>
-                                  </div>
-                                </td>
-                              ))}
-                              <td className="p-0.5 text-center font-semibold text-xs text-gray-900">
-                                {holes.slice(0, 9).filter(hole => hole.fairwayHit === 'middle').length}/9
-                              </td>
-                            </tr>
-                            <tr className="bg-gray-50/30">
-                              <td className="py-1 px-1 text-xs font-medium text-gray-600">GIR</td>
-                              {[...Array(9)].map((_, i) => (
-                                <td key={i} className="p-0.5 text-center">
-                                  <div className="h-7 flex items-center justify-center">
-                                    <span className={`text-base ${calculateGIR(holes[i].score, holes[i].putts) ? 'text-[#15803D]' : 'text-gray-300'}`}>
-                                      ●
-                                    </span>
-                                  </div>
-                                </td>
-                              ))}
-                              <td className="p-0.5 text-center font-semibold text-xs text-gray-900">
-                                {holes.slice(0, 9).filter(hole => calculateGIR(hole.score, hole.putts)).length}/9
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 mb-2">
-                      <h3 className="text-base font-medium text-gray-900">Back Nine</h3>
-                    </div>
-                    <div className="overflow-x-auto -mx-4 px-4">
-                      <table className="min-w-full">
-                        <thead>
-                          <tr>
-                            <th className="w-16 py-1.5 px-1 text-left text-xs font-semibold text-gray-600 border-b border-gray-200">
-                              Stats
-                            </th>
-                            {[...Array(9)].map((_, i) => (
-                              <th key={i + 9} className="w-11 py-1 px-1 text-center border-b border-gray-200">
-                                <div className="space-y-1">
-                                  <div className="bg-[#15803D] rounded-t-sm p-1">
-                                    <div className="text-xs font-bold text-white">{i + 10}</div>
-                                  </div>
-                                  <div className="text-[10px] font-medium text-gray-500">
-                                    Par {holes[i + 9]?.par || '-'}
-                                  </div>
-                                </div>
-                              </th>
-                            ))}
-                            <th className="w-12 py-1 px-1 text-center border-b border-gray-200">
-                              <div className="text-xs font-semibold text-gray-600">IN</div>
-                              <div className="text-[10px] font-medium text-gray-500">
-                                {selectedTeeBox ? 
-                                  teeBoxes.find(tb => tb.id === selectedTeeBox)?.back_nine_par?.reduce((a, b) => a + b, 0) 
-                                  : '-'}
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td className="py-1 px-1 text-xs font-medium text-gray-600">Score</td>
-                            {[...Array(9)].map((_, i) => (
-                              <td key={i + 9} className="p-0.5">
-                                <input
-                                  type="text"
-                                  inputMode="none"
-                                  value={holes[i + 9].score}
-                                  onClick={(e) => handleInputClick(e, 'score', i + 9)}
-                                  readOnly
-                                  data-hole={i + 9}
-                                  data-type="score"
-                                  className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] cursor-pointer"
-                                />
-                              </td>
-                            ))}
-                            <td className="p-0.5 text-center font-semibold text-sm text-gray-900">
-                              {holes.slice(9).reduce((sum, hole) => sum + (hole.score ? parseInt(hole.score) : 0), 0) || '-'}
-                            </td>
-                          </tr>
-                          <tr className="bg-gray-50/30">
-                            <td className="py-1 px-1 text-xs font-medium text-gray-600">Putts</td>
-                            {[...Array(9)].map((_, i) => (
-                              <td key={i + 9} className="p-0.5">
-                                <input
-                                  type="text"
-                                  inputMode="none"
-                                  value={holes[i + 9].putts}
-                                  onClick={(e) => handleInputClick(e, 'putts', i + 9)}
-                                  readOnly
-                                  data-hole={i + 9}
-                                  data-type="putts"
-                                  className="w-full h-7 text-center text-sm border border-gray-200 rounded focus:ring-1 focus:ring-[#15803D] focus:border-transparent transition-all hover:border-[#15803D] bg-white cursor-pointer"
-                                />
-                              </td>
-                            ))}
-                            <td className="p-0.5 text-center font-semibold text-sm text-gray-900">
-                              {holes.slice(9).reduce((sum, hole) => sum + (hole.putts ? parseInt(hole.putts) : 0), 0) || '-'}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="py-1 px-1 text-xs font-medium text-gray-600">Fairway</td>
-                            {[...Array(9)].map((_, i) => (
-                              <td key={i + 9} className="p-0.5">
-                                <div className="flex flex-col gap-0.5">
-                                  <button
-                                    type="button"
-                                    tabIndex={i + 46}
-                                    onClick={() => handleHoleChange(i + 9, 'fairwayHit', 'left')}
-                                    className={`h-5 border rounded flex items-center justify-center transition-all ${
-                                      holes[i + 9].fairwayHit === 'left'
-                                        ? 'bg-gray-100 text-gray-500 border-gray-300'
-                                        : 'border-gray-200 hover:border-[#15803D] hover:text-[#15803D]'
-                                    }`}
-                                  >
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M10 19L3 12L10 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    tabIndex={i + 46}
-                                    onClick={() => handleHoleChange(i + 9, 'fairwayHit', 'middle')}
-                                    className={`h-5 border rounded flex items-center justify-center transition-all ${
-                                      holes[i + 9].fairwayHit === 'middle'
-                                        ? 'bg-[#15803D] text-white border-[#15803D]'
-                                        : 'border-gray-200 hover:border-[#15803D] hover:text-[#15803D]'
-                                    }`}
-                                  >
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M12 19L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    tabIndex={i + 46}
-                                    onClick={() => handleHoleChange(i + 9, 'fairwayHit', 'right')}
-                                    className={`h-5 border rounded flex items-center justify-center transition-all ${
-                                      holes[i + 9].fairwayHit === 'right'
-                                        ? 'bg-gray-100 text-gray-500 border-gray-300'
-                                        : 'border-gray-200 hover:border-[#15803D] hover:text-[#15803D]'
-                                    }`}
-                                  >
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M14 5L21 12L14 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  </button>
-                                </div>
-                              </td>
-                            ))}
-                            <td className="p-0.5 text-center font-semibold text-xs text-gray-900">
-                              {holes.slice(9).filter(hole => hole.fairwayHit === 'middle').length}/9
-                            </td>
-                          </tr>
-                          <tr className="bg-gray-50/30">
-                            <td className="py-1 px-1 text-xs font-medium text-gray-600">GIR</td>
-                            {[...Array(9)].map((_, i) => (
-                              <td key={i + 9} className="p-0.5 text-center">
-                                <div className="h-7 flex items-center justify-center">
-                                  <span className={`text-base ${calculateGIR(holes[i + 9].score, holes[i + 9].putts) ? 'text-[#15803D]' : 'text-gray-300'}`}>
-                                    ●
-                                  </span>
-                                </div>
-                              </td>
-                            ))}
-                            <td className="p-0.5 text-center font-semibold text-xs text-gray-900">
-                              {holes.slice(9).filter(hole => calculateGIR(hole.score, hole.putts)).length}/9
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Round Summary */}
-                <div className="mt-8 bg-white rounded-lg shadow-sm p-4">
-                  <h3 className="text-base font-medium text-gray-900 mb-3">Round Summary</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">Total Score</div>
-                      <div className="text-xl font-bold text-gray-900">
-                        {roundSummary.totalScore || '--'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">Total Putts</div>
-                      <div className="text-xl font-bold text-gray-900">
-                        {roundSummary.totalPutts || '--'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">Fairways Hit</div>
-                      <div className="text-xl font-bold text-gray-900">
-                        {roundSummary.fairwaysHit ? `${Math.round((roundSummary.fairwaysHit / 18) * 100)}%` : '--'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">GIR</div>
-                      <div className="text-xl font-bold text-gray-900">
-                        {roundSummary.girCount ? `${Math.round((roundSummary.girCount / 18) * 100)}%` : '--'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Scorecard Tips */}
-                <div className="mt-8 bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-base font-medium text-gray-900 mb-4">Scorecard Tips</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Quick Actions</h4>
-                      <p className="text-sm text-gray-600 mb-2">Use these to quickly fill in common patterns:</p>
-                      <div className="flex justify-end gap-3">
-                        <button
-                          onClick={applyBogeyGolf}
-                          className="text-sm text-[#15803D] hover:text-[#126c33] font-medium flex items-center gap-1"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 4V20M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          Quick Bogey Golf
-                        </button>
-                        <button
-                          onClick={applyTwoPutts}
-                          className="text-sm text-[#15803D] hover:text-[#126c33] font-medium flex items-center gap-1"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 4V20M5 11L12 4L19 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          Quick 2-Putts
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Fairway Indicators</h4>
-                      <p className="text-sm text-gray-600 mb-2">Click to mark where your tee shot landed:</p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <button className="h-5 w-5 border border-gray-200 rounded flex items-center justify-center">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M10 19L3 12L10 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <span className="text-xs text-gray-500">Left</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button className="h-5 w-5 border border-gray-200 rounded flex items-center justify-center">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 19L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <span className="text-xs text-gray-500">Middle</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button className="h-5 w-5 border border-gray-200 rounded flex items-center justify-center">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 5L21 12L14 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <span className="text-xs text-gray-500">Right</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Save Round Button */}
-                <div className="mt-8">
-                  <button
-                    onClick={handleSaveRound}
-                    disabled={!selectedCourse || !selectedTeeBox || holes.some(hole => !hole.score)}
-                    className={`
-                      w-full py-3 rounded-lg transition-colors
-                      ${!selectedCourse || !selectedTeeBox || holes.some(hole => !hole.score)
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-[#15803D] text-white hover:bg-[#126c33]'
-                      }
-                    `}
-                  >
-                    Save Round
-                  </button>
-                </div>
+                {/* Unified Scorecard UI */}
+                <UnifiedScorecard
+                  editHoles={holes.map((h, idx) => ({
+                    hole: idx + 1,
+                    score: h.score,
+                    putts: h.putts,
+                    fairway: h.fairwayHit === 'middle' ? 'hit' : h.fairwayHit || '',
+                    gir: calculateGIR(h.score, h.putts) || false,
+                  }))}
+                  onEditHole={(idx, field, value) => {
+                    if (field === 'score' || field === 'putts') {
+                      handleHoleChange(idx, field as keyof HoleData, value.toString());
+                    } else if (field === 'fairway') {
+                      // Map 'hit' to 'middle', '' to null, etc.
+                      handleHoleChange(idx, 'fairwayHit', value === 'hit' ? 'middle' : value === '' ? null : value);
+                    }
+                  }}
+                  openNumberGrid={(type, idx, e) => {
+                    const rect = (e.target as HTMLElement).getBoundingClientRect();
+                    setNumberGrid({ isOpen: true, type, holeIndex: idx, position: { top: rect.bottom + window.scrollY + 8, left: rect.left + rect.width / 2 } });
+                  }}
+                  numberGrid={numberGrid}
+                  courseName={courses.find(c => c.id === selectedCourse)?.name || ''}
+                  teeBoxName={teeBoxes.find(tb => tb.id === selectedTeeBox)?.tee_name || ''}
+                  date={datePlayed}
+                  totalScore={roundSummary.totalScore}
+                  totalPutts={roundSummary.totalPutts}
+                  fairwaysHit={roundSummary.fairwaysHit}
+                  fairwaysPct={Math.round((roundSummary.fairwaysHit / 18) * 100)}
+                  onRetry={undefined}
+                  onConfirm={handleSaveRound}
+                  confirmDisabled={false}
+                  ScoreNumberGrid={
+                    <ScoreNumberGrid
+                      isOpen={numberGrid.isOpen}
+                      onClose={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
+                      onSelect={value => {
+                        if (numberGrid.isOpen) {
+                          handleHoleChange(numberGrid.holeIndex, numberGrid.type as keyof HoleData, value ? value.toString() : '');
+                        }
+                      }}
+                      par={4}
+                      type={numberGrid.type as 'score' | 'putts'}
+                      position={numberGrid.position}
+                      holeNumber={numberGrid.holeIndex + 1}
+                      onNextHole={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
+                    />
+                  }
+                />
               </div>
             )}
           </div>
         </div>
-
-        {/* Number Grid */}
-        <ScoreNumberGrid
-          isOpen={numberGrid.isOpen}
-          onClose={() => setNumberGrid(prev => ({ ...prev, isOpen: false }))}
-          onSelect={(value) => {
-            handleHoleChange(numberGrid.holeIndex, numberGrid.type, value);
-            if (value !== '' && numberGrid.holeIndex < 17) {
-              // Advance to next hole
-              const nextHoleIndex = numberGrid.holeIndex + 1;
-              const nextInput = document.querySelector(`input[data-hole="${nextHoleIndex}"][data-type="${numberGrid.type}"]`);
-              setNumberGrid(prev => ({
-                ...prev,
-                isOpen: true,
-                holeIndex: nextHoleIndex,
-                position: (() => {
-                  if (nextInput) {
-                    const rect = nextInput.getBoundingClientRect();
-                    return {
-                      top: rect.bottom + window.scrollY + 8,
-                      left: rect.left + rect.width / 2
-                    };
-                  }
-                  return prev.position;
-                })(),
-              }));
-            } else {
-              // Close if last hole or cleared
-              setNumberGrid(prev => ({ ...prev, isOpen: false }));
-            }
-          }}
-          par={parseInt(holes[numberGrid.holeIndex]?.par || '4')}
-          type={numberGrid.type}
-          position={numberGrid.position}
-          holeNumber={numberGrid.holeIndex + 1}
-        />
       </main>
     </div>
   );
