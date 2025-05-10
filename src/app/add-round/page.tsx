@@ -587,10 +587,10 @@ export default function AddRound() {
                   }))}
                   onEditHole={(idx, field, value) => {
                     if (field === 'score' || field === 'putts') {
-                      handleHoleChange(idx, field as keyof HoleData, value.toString());
+                      handleHoleChange(idx, field as keyof HoleData, value?.toString() || '');
                     } else if (field === 'fairway') {
                       // Map 'hit' to 'middle', '' to null, etc.
-                      handleHoleChange(idx, 'fairwayHit', value === 'hit' ? 'middle' : value === '' ? null : value);
+                      handleHoleChange(idx, 'fairwayHit', value === 'hit' ? 'middle' : value === '' ? null : value as string);
                     }
                   }}
                   openNumberGrid={(type, idx, e) => {

@@ -60,10 +60,6 @@ export default function ScorecardUpload({ onScorecardProcessed, onError }: Score
   const [selectedCourse] = useState<string>('');
   const [selectedTeeBox] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>('');
-  const [searchCourse] = useState('');
-  const [setFilteredCourses] = useState<{ id: string; name: string }[]>([]);
-  const [searchTeeBox] = useState('');
-  const [setFilteredTeeBoxes] = useState<{ id: string; tee_name: string }[]>([]);
   const [editHoles, setEditHoles] = useState<EditHole[]>([]);
   const [numberGrid, setNumberGrid] = useState<NumberGridState>({ isOpen: false, type: 'score', holeIndex: 0, position: { top: 0, left: 0 } });
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
